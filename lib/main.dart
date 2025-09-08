@@ -47,56 +47,111 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
+  String _userName = 'Thanh Dat';
 
-  final List<Widget> _pages = [
-    const HomeScreen(),
-    const SessionsScreen(),
-    const CommunityScreen(),
-    const ProfileScreen(),
-  ];
+  void _updateUserName(String newName) {
+    setState(() {
+      _userName = newName;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 300),
-        transitionBuilder: (Widget child, Animation<double> animation) {
-          return FadeTransition(opacity: animation, child: child);
-        },
-        child: _pages[_currentIndex],
+    final List<Widget> pages = [
+      HomeScreen(userName: _userName),
+      const SessionsScreen(),
+      const CommunityScreen(),
+      ProfileScreen(
+        initialName: _userName,
+        onNameUpdated: _updateUserName,
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        currentIndex: _currentIndex,
-        onTap: (index) {
+    ];
+
+    final screenWidth = MediaQuery.of(context).size.width;
+    const itemCount = 4;
+    final itemWidth = screenWidth / itemCount;
+    const indicatorWidth = 40.0;
+
+    return Scaffold(
+      body: SafeArea(
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          transitionBuilder: (Widget child, Animation<double> animation) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+          child: KeyedSubtree(
+            key: ValueKey<int>(_currentIndex),
+            child: pages[_currentIndex],
+          ),
+        ),
+      ),
+      bottomNavigationBar: Container(
+        height:
+            kBottomNavigationBarHeight + MediaQuery.of(context).padding.bottom,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 10,
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            // Thanh chỉ báo trượt mượt mà
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 350),
+              curve: Curves.easeInOutCubic,
+              top: 0,
+              left: (_currentIndex * itemWidth) +
+                  (itemWidth / 2) -
+                  (indicatorWidth / 2),
+              child: Container(
+                width: indicatorWidth,
+                height: 3,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF5DB075),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            // Đã sửa: Thay thế BottomNavigationBar bằng Row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                _buildNavItem(Icons.home, 0),
+                _buildNavItem(Icons.videocam_outlined, 1),
+                _buildNavItem(Icons.chat_bubble_outline, 2),
+                _buildNavItem(Icons.people_outline, 3),
+              ],
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Widget trợ giúp để tạo từng mục điều hướng
+  Widget _buildNavItem(IconData icon, int index) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
           setState(() {
             _currentIndex = index;
           });
         },
-        selectedItemColor: const Color(0xFF5DB075),
-        unselectedItemColor: Colors.grey.shade400,
-        showSelectedLabels: false,
-        showUnselectedLabels: false,
-        backgroundColor: Colors.white,
-        elevation: 5,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home, size: 30),
-            label: 'Home',
+        behavior: HitTestBehavior.opaque, // Đảm bảo toàn bộ khu vực có thể nhấn
+        child: Center(
+          child: Icon(
+            icon,
+            size: 30,
+            color: _currentIndex == index
+                ? const Color(0xFF5DB075)
+                : Colors.grey.shade400,
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.videocam_outlined, size: 30),
-            label: 'Sessions',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.chat_bubble_outline, size: 30),
-            label: 'Community',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people_outline, size: 30),
-            label: 'Profile',
-          ),
-        ],
+        ),
       ),
     );
   }

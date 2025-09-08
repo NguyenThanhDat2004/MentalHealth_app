@@ -6,20 +6,25 @@
 // tree, read text, and verify that the values of widget properties are correct.
 
 import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test/flutter_test.dart'; // ĐÃ SỬA LỖI
 
-// Giả sử tên project của bạn là 'mental_health_app'.
-// Nếu khác, hãy thay thế 'mental_health_app' bằng tên đúng trong file pubspec.yaml.
+// Sửa lại tên package cho đúng với tên dự án của bạn
+// (Tên package có thể xem trong file pubspec.yaml)
 import 'package:mental_health_app/main.dart';
+import 'package:mental_health_app/home_screen.dart';
 
 void main() {
-  testWidgets('App loads and displays the main screen',
+  testWidgets('App loads and displays the main screen with HomeScreen',
       (WidgetTester tester) async {
     // Build our app and trigger a frame.
+    // Sửa lại tên class từ MyApp thành MentalHealthApp
     await tester.pumpWidget(const MentalHealthApp());
 
-    // Xác minh rằng màn hình chính (MainScreen) được hiển thị.
+    // Xác minh rằng MainScreen (chứa BottomNavBar) được hiển thị.
     expect(find.byType(MainScreen), findsOneWidget);
+
+    // Xác minh rằng HomeScreen được hiển thị mặc định khi app khởi động.
+    expect(find.byType(HomeScreen), findsOneWidget);
 
     // Xác minh rằng BottomNavigationBar có mặt.
     expect(find.byType(BottomNavigationBar), findsOneWidget);

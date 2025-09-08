@@ -1,102 +1,133 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
 class SessionsScreen extends StatelessWidget {
   const SessionsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(20.0),
-          children: [
-            // Phần 1: Header
-            _buildHeader(),
-            const SizedBox(height: 30),
+    // Dữ liệu mẫu
+    final List<Map<String, dynamic>> sessions = [
+      {
+        'imageUrl': 'https://i.pravatar.cc/150?img=1',
+        'name': 'Sahana V',
+        'specialty': 'Msc in Clinical Psychology',
+        'date': '31st March ‘22',
+        'time': '7:30 PM - 8:30 PM',
+        'isCompleted': false,
+      },
+      {
+        'imageUrl': 'https://i.pravatar.cc/150?img=2',
+        'name': 'Sahana V',
+        'specialty': 'Msc in Clinical Psychology',
+        'date': '31st March ‘22',
+        'time': '7:30 PM - 8:30 PM',
+        'isCompleted': true,
+      },
+      {
+        'imageUrl': 'https://i.pravatar.cc/150?img=3',
+        'name': 'Sahana V',
+        'specialty': 'Msc in Clinical Psychology',
+        'date': '31st March ‘22',
+        'time': '7:30 PM - 8:30 PM',
+        'isCompleted': true,
+      },
+      {
+        'imageUrl': 'https://i.pravatar.cc/150?img=4',
+        'name': 'Sahana V',
+        'specialty': 'Msc in Clinical Psychology',
+        'date': '1st April ‘22',
+        'time': '7:30 PM - 8:30 PM',
+        'isCompleted': false,
+      },
+    ];
 
-            // Phần 2: Thẻ "Upcoming Session"
-            _buildUpcomingSessionCard(),
-            const SizedBox(height: 30),
-
-            // Phần 3: Tiêu đề "All Sessions"
-            _buildAllSessionsHeader(),
-            const SizedBox(height: 20),
-
-            // Phần 4: Danh sách các session
-            _buildSessionCard(
-              imageUrl: 'https://i.pravatar.cc/150?img=1',
-              name: 'Sahana V',
-              specialty: 'Msc in Clinical Psychology',
-              date: '31st March ‘22',
-              time: '7:30 PM - 8:30 PM',
-              isCompleted: false,
-            ),
-            const SizedBox(height: 15),
-            _buildSessionCard(
-              imageUrl: 'https://i.pravatar.cc/150?img=2',
-              name: 'Sahana V',
-              specialty: 'Msc in Clinical Psychology',
-              date: '31st March ‘22',
-              time: '7:30 PM - 8:30 PM',
-              isCompleted: true,
-            ),
-            const SizedBox(height: 15),
-            // Thẻ bị che một phần
-            Opacity(
-              opacity: 0.5,
+    // LOẠI BỎ SCAFFOLD VÀ SAFEAREA
+    return AnimationLimiter(
+      child: ListView.builder(
+        padding: const EdgeInsets.all(20.0),
+        itemCount: sessions.length + 3, // +3 for headers and upcoming card
+        itemBuilder: (context, index) {
+          Widget child;
+          if (index == 0) {
+            child = _buildHeader();
+          } else if (index == 1) {
+            child = _buildUpcomingSessionCard();
+          } else if (index == 2) {
+            child = _buildAllSessionsHeader();
+          } else {
+            final sessionIndex = index - 3;
+            final session = sessions[sessionIndex];
+            child = Padding(
+              padding: const EdgeInsets.only(bottom: 15.0),
               child: _buildSessionCard(
-                imageUrl: 'https://i.pravatar.cc/150?img=3',
-                name: 'Sahana V',
-                specialty: 'Msc in Clinical Psychology',
-                date: '31st March ‘22',
-                time: '7:30 PM - 8:30 PM',
-                isCompleted: true,
+                imageUrl: session['imageUrl'],
+                name: session['name'],
+                specialty: session['specialty'],
+                date: session['date'],
+                time: session['time'],
+                isCompleted: session['isCompleted'],
+              ),
+            );
+          }
+          return AnimationConfiguration.staggeredList(
+            position: index,
+            duration: const Duration(milliseconds: 375),
+            child: SlideAnimation(
+              verticalOffset: 50.0,
+              child: FadeInAnimation(
+                child: child,
               ),
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
   Widget _buildHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        const CircleAvatar(
-          radius: 25,
-          backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=32'),
-        ),
-        Stack(
-          alignment: Alignment.topRight,
-          children: [
-            const Icon(Icons.notifications_none, size: 30, color: Colors.grey),
-            Container(
-              padding: const EdgeInsets.all(5),
-              decoration: const BoxDecoration(
-                color: Colors.red,
-                shape: BoxShape.circle,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const CircleAvatar(
+            radius: 25,
+            backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=32'),
+          ),
+          Stack(
+            alignment: Alignment.topRight,
+            children: [
+              const Icon(Icons.notifications_none,
+                  size: 30, color: Colors.grey),
+              Container(
+                padding: const EdgeInsets.all(5),
+                decoration: const BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                ),
+                child: const Text(
+                  '3',
+                  style: TextStyle(color: Colors.white, fontSize: 10),
+                ),
               ),
-              child: const Text(
-                '3',
-                style: TextStyle(color: Colors.white, fontSize: 10),
-              ),
-            ),
-          ],
-        ),
-      ],
+            ],
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildUpcomingSessionCard() {
     return Container(
+      margin: const EdgeInsets.symmetric(vertical: 10),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFE8F5E9), // Đổi sang màu xanh lá nhạt
+        color: const Color(0xFFE8F5E9),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.green.withAlpha(26), // Đã sửa lỗi bằng withAlpha
+            color: Colors.green.withAlpha(26), // 0.1 * 255 = 25.5 ~ 26
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -125,7 +156,7 @@ class SessionsScreen extends StatelessWidget {
               Text(
                 'Join Now',
                 style: TextStyle(
-                  color: Color(0xFF5DB075), // Đổi sang màu xanh lá
+                  color: Color(0xFF5DB075),
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
                 ),
@@ -133,30 +164,33 @@ class SessionsScreen extends StatelessWidget {
               SizedBox(width: 8),
               Icon(
                 Icons.play_circle_fill,
-                color: Color(0xFF5DB075), // Đổi sang màu xanh lá
-              ),
+                color: Color(0xFF5DB075),
+              )
             ],
-          ),
+          )
         ],
       ),
     );
   }
 
   Widget _buildAllSessionsHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        const Row(
-          children: [
-            Text(
-              'All Sessions',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            Icon(Icons.arrow_drop_down),
-          ],
-        ),
-        Icon(Icons.swap_vert, color: Colors.grey.shade600),
-      ],
+    return Padding(
+      padding: const EdgeInsets.only(top: 20, bottom: 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Row(
+            children: [
+              Text(
+                'All Sessions',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              Icon(Icons.arrow_drop_down),
+            ],
+          ),
+          Icon(Icons.swap_vert, color: Colors.grey.shade600),
+        ],
+      ),
     );
   }
 
@@ -171,9 +205,7 @@ class SessionsScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isCompleted
-            ? Colors.white
-            : const Color(0xFFE8F5E9), // Đổi sang màu xanh lá nhạt
+        color: isCompleted ? Colors.white : const Color(0xFFE8F5E9),
         borderRadius: BorderRadius.circular(20),
         border: isCompleted ? Border.all(color: Colors.grey.shade200) : null,
       ),
@@ -181,7 +213,10 @@ class SessionsScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              CircleAvatar(radius: 25, backgroundImage: NetworkImage(imageUrl)),
+              CircleAvatar(
+                radius: 25,
+                backgroundImage: NetworkImage(imageUrl),
+              ),
               const SizedBox(width: 15),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -189,9 +224,7 @@ class SessionsScreen extends StatelessWidget {
                   Text(
                     name,
                     style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                        fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 5),
                   Text(
@@ -199,7 +232,7 @@ class SessionsScreen extends StatelessWidget {
                     style: const TextStyle(fontSize: 14, color: Colors.black54),
                   ),
                 ],
-              ),
+              )
             ],
           ),
           const SizedBox(height: 15),
@@ -228,16 +261,14 @@ class SessionsScreen extends StatelessWidget {
           child: ElevatedButton(
             onPressed: () {},
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF5DB075), // Đổi sang màu xanh lá
+              backgroundColor: const Color(0xFF5DB075),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(15),
               ),
               padding: const EdgeInsets.symmetric(vertical: 15),
             ),
-            child: const Text(
-              'Reschedule',
-              style: TextStyle(color: Colors.white, fontSize: 16),
-            ),
+            child: const Text('Reschedule',
+                style: TextStyle(color: Colors.white, fontSize: 16)),
           ),
         ),
         const SizedBox(width: 15),
@@ -245,18 +276,14 @@ class SessionsScreen extends StatelessWidget {
           child: OutlinedButton(
             onPressed: () {},
             style: OutlinedButton.styleFrom(
-              side: const BorderSide(
-                color: Color(0xFF5DB075),
-              ), // Đổi sang màu xanh lá
+              side: const BorderSide(color: Color(0xFF5DB075)),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(15),
               ),
               padding: const EdgeInsets.symmetric(vertical: 15),
             ),
-            child: const Text(
-              'Join Now',
-              style: TextStyle(color: Color(0xFF5DB075), fontSize: 16),
-            ), // Đổi sang màu xanh lá
+            child: const Text('Join Now',
+                style: TextStyle(color: Color(0xFF5DB075), fontSize: 16)),
           ),
         ),
       ],
@@ -270,16 +297,14 @@ class SessionsScreen extends StatelessWidget {
           child: ElevatedButton(
             onPressed: () {},
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF5DB075), // Đổi sang màu xanh lá
+              backgroundColor: const Color(0xFF5DB075),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(15),
               ),
               padding: const EdgeInsets.symmetric(vertical: 15),
             ),
-            child: const Text(
-              'Re-book',
-              style: TextStyle(color: Colors.white, fontSize: 16),
-            ),
+            child: const Text('Re-book',
+                style: TextStyle(color: Colors.white, fontSize: 16)),
           ),
         ),
         const SizedBox(width: 15),
@@ -287,18 +312,14 @@ class SessionsScreen extends StatelessWidget {
           child: OutlinedButton(
             onPressed: () {},
             style: OutlinedButton.styleFrom(
-              side: const BorderSide(
-                color: Color(0xFF5DB075),
-              ), // Đổi sang màu xanh lá
+              side: const BorderSide(color: Color(0xFF5DB075)),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(15),
               ),
               padding: const EdgeInsets.symmetric(vertical: 15),
             ),
-            child: const Text(
-              'View Profile',
-              style: TextStyle(color: Color(0xFF5DB075), fontSize: 16),
-            ), // Đổi sang màu xanh lá
+            child: const Text('View Profile',
+                style: TextStyle(color: Color(0xFF5DB075), fontSize: 16)),
           ),
         ),
       ],

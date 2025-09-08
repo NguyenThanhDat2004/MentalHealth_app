@@ -1,141 +1,73 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'community_screen.dart';
-import 'profile_screen.dart';
-import 'sessions_screen.dart';
-
-void main() {
-  runApp(const MentalHealthApp());
-}
-
-class MentalHealthApp extends StatelessWidget {
-  const MentalHealthApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-      ),
-    );
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Mental Health App',
-      theme: ThemeData(
-        fontFamily: 'Urbanist',
-        scaffoldBackgroundColor: const Color(0xFFF9F9F9),
-      ),
-      home: const MainScreen(),
-    );
-  }
-}
-
-class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
-
-  @override
-  State<MainScreen> createState() => _MainScreenState();
-}
-
-class _MainScreenState extends State<MainScreen> {
-  int _selectedIndex = 0;
-
-  // Cập nhật danh sách các trang
-  static const List<Widget> _widgetOptions = <Widget>[
-    HomeScreen(),
-    SessionsScreen(),
-    CommunityScreen(),
-    ProfileScreen(), // Thêm màn hình Profile
-  ];
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(child: _widgetOptions.elementAt(_selectedIndex)),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home, size: 30),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.videocam, size: 30),
-            label: 'Sessions',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.chat_bubble_outline, size: 30),
-            label: 'Community',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people_outline, size: 30),
-            label: 'Profile',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: const Color(0xFF5DB075),
-        unselectedItemColor: Colors.grey.shade400,
-        onTap: _onItemTapped,
-        type: BottomNavigationBarType.fixed,
-        showSelectedLabels: false,
-        showUnselectedLabels: false,
-        backgroundColor: Colors.white,
-        elevation: 5,
-      ),
-    );
-  }
-}
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  // Thêm biến để nhận tên người dùng từ main.dart
+  final String userName;
+
+  const HomeScreen({super.key, required this.userName});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  // Đã sửa: Thêm 'final' vì giá trị của biến này không thay đổi
   final bool _isPlanExpired = false;
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(20.0),
-          children: [
-            _isPlanExpired ? _buildSimpleHeader() : _buildGreetingHeader(),
-            const SizedBox(height: 25),
-            if (!_isPlanExpired)
-              const Text(
-                'How are you feeling today ?',
-                style: TextStyle(
-                  fontSize: 18,
-                  color: Colors.grey,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            if (!_isPlanExpired) const SizedBox(height: 20),
-            _isPlanExpired
-                ? _buildIconMoodSelection()
-                : _buildEmojiMoodSelection(),
-            const SizedBox(height: 30),
-            _buildSessionCard(),
-            const SizedBox(height: 20),
-            _buildActionButtons(),
-            const SizedBox(height: 20),
-            _buildQuoteCard(),
-            const SizedBox(height: 20),
-            _isPlanExpired
-                ? _buildPlanExpiredCard()
-                : _buildPlanExaminedButton(),
-          ],
+    List<Widget> children = [
+      _isPlanExpired ? _buildSimpleHeader() : _buildGreetingHeader(),
+      const SizedBox(height: 25),
+      if (!_isPlanExpired)
+        const Text(
+          'How are you feeling today ?',
+          style: TextStyle(
+            fontSize: 18,
+            color: Colors.grey,
+            fontWeight: FontWeight.w500,
+          ),
         ),
+      if (!_isPlanExpired) const SizedBox(height: 20),
+      _isPlanExpired ? _buildIconMoodSelection() : _buildEmojiMoodSelection(),
+      const SizedBox(height: 30),
+      _buildSessionCard(),
+      const SizedBox(height: 20),
+      _buildActionButtons(),
+      const SizedBox(height: 20),
+      _buildQuoteCard(),
+      const SizedBox(height: 20),
+      AnimatedSwitcher(
+        duration: const Duration(milliseconds: 500),
+        transitionBuilder: (Widget child, Animation<double> animation) {
+          return FadeTransition(
+            opacity: animation,
+            child: ScaleTransition(scale: animation, child: child),
+          );
+        },
+        child: _isPlanExpired
+            ? _buildPlanExpiredCard(key: const ValueKey('expired'))
+            : _buildPlanExaminedButton(key: const ValueKey('examined')),
+      ),
+    ];
+
+    return AnimationLimiter(
+      child: ListView.builder(
+        padding: const EdgeInsets.all(20.0),
+        itemCount: children.length,
+        itemBuilder: (BuildContext context, int index) {
+          return AnimationConfiguration.staggeredList(
+            position: index,
+            duration: const Duration(milliseconds: 375),
+            child: SlideAnimation(
+              verticalOffset: 50.0,
+              child: FadeInAnimation(
+                child: children[index],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -183,9 +115,10 @@ class _HomeScreenState extends State<HomeScreen> {
             color: Color(0xFF333333),
           ),
         ),
-        const Text(
-          'Thanh Dat!',
-          style: TextStyle(
+        // Sử dụng tên người dùng được truyền vào qua widget
+        Text(
+          '${widget.userName}!',
+          style: const TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
             color: Color(0xFF333333),
@@ -213,8 +146,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildPlanExaminedButton() {
+  Widget _buildPlanExaminedButton({Key? key}) {
     return Container(
+      key: key,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: const Color(0xFF588f72),
@@ -254,18 +188,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       SizedBox(height: 10),
                       Text(
-                        'You can examine your plan\nand book sessions',
+                        'Your plan is active and well.',
                         style: TextStyle(
-                          fontSize: 15,
-                          color: Colors.white70,
-                          height: 1.4,
-                        ),
+                            fontSize: 15, color: Colors.white70, height: 1.4),
                       ),
                       SizedBox(height: 18),
                       Row(
                         children: [
                           Text(
-                            'Examine',
+                            'View Details',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -273,11 +204,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                           SizedBox(width: 8),
-                          Icon(
-                            Icons.arrow_forward,
-                            size: 20,
-                            color: Colors.white,
-                          ),
+                          Icon(Icons.arrow_forward,
+                              size: 20, color: Colors.white),
                         ],
                       ),
                     ],
@@ -299,7 +227,8 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         const CircleAvatar(
           radius: 25,
-          backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=47'),
+          backgroundImage: NetworkImage(
+              'https://eric.edu.vn/public/upload/2024/12/anh-gai-xinh-lop-10-09.webp'),
         ),
         Stack(
           alignment: Alignment.topRight,
@@ -361,8 +290,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildPlanExpiredCard() {
+  Widget _buildPlanExpiredCard({Key? key}) {
     return Container(
+      key: key,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: const Color(0xFF588f72),
@@ -404,10 +334,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Text(
                         'Get back chat access and\nsession credits',
                         style: TextStyle(
-                          fontSize: 15,
-                          color: Colors.white70,
-                          height: 1.4,
-                        ),
+                            fontSize: 15, color: Colors.white70, height: 1.4),
                       ),
                       SizedBox(height: 18),
                       Row(
@@ -421,11 +348,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                           SizedBox(width: 8),
-                          Icon(
-                            Icons.arrow_forward,
-                            size: 20,
-                            color: Colors.white,
-                          ),
+                          Icon(Icons.arrow_forward,
+                              size: 20, color: Colors.white),
                         ],
                       ),
                     ],

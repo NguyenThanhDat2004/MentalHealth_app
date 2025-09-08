@@ -1,60 +1,83 @@
 import 'package:flutter/material.dart';
 
-// Đã gộp màn hình Edit Profile vào đây
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  // Thêm các biến để nhận dữ liệu và callback
+  final String initialName;
+  final Function(String) onNameUpdated;
+
+  const ProfileScreen({
+    super.key,
+    required this.initialName,
+    required this.onNameUpdated,
+  });
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  // Biến trạng thái để quản lý chế độ xem/chỉnh sửa
   bool _isEditing = false;
-
-  // Controllers để quản lý dữ liệu trong các ô nhập liệu
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
   late TextEditingController _emailController;
-
-  // Biến cho dropdown
-  String _selectedDepartment = 'Software Engineering';
+  String _selectedDepartment = 'Human Resources';
   final List<String> _departments = [
     'Software Engineering',
     'Technology',
     'Human Resources',
     'Marketing',
-    'Computer Engineering',
-    'Business Administration',
     'Law',
+    'Data Science',
+    'Cybersecurity',
+    'UI/UX Design',
+    'Finance',
+    'Accounting',
+    'Sales',
+    'Business Administration',
+    'Graphic Design',
+    'Content Writing',
+    'Medicine',
+    'Nursing',
+    'Pharmacy',
+    'Mechanical Engineering',
+    'Civil Engineering',
+    'Electrical Engineering',
+    'Teaching',
   ];
 
   @override
   void initState() {
     super.initState();
-    // Khởi tạo dữ liệu ban đầu
-    _nameController = TextEditingController(text: 'Nguyen Thanh Dat');
+    // Khởi tạo controller với dữ liệu được truyền vào
+    _nameController = TextEditingController(text: widget.initialName);
     _phoneController = TextEditingController(text: '+98 1245560090');
     _emailController = TextEditingController(text: 'amyyoung@random.com');
   }
 
+  // Cập nhật controller nếu widget được rebuild với dữ liệu mới
+  @override
+  void didUpdateWidget(covariant ProfileScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialName != oldWidget.initialName) {
+      _nameController.text = widget.initialName;
+    }
+  }
+
   @override
   void dispose() {
-    // Hủy các controller khi widget bị xóa
     _nameController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
     super.dispose();
   }
 
-  // Hàm để lưu thông tin
   void _saveProfile() {
+    // Gọi callback để gửi tên mới lên cho MainScreen
+    widget.onNameUpdated(_nameController.text);
+
     setState(() {
-      // Chỉ cần thoát khỏi chế độ chỉnh sửa là đủ,
-      // vì controllers đã giữ giá trị mới.
       _isEditing = false;
     });
-    // Hiển thị thông báo đã lưu
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Profile updated successfully!'),
@@ -67,29 +90,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: _buildAppBar(),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          child: _isEditing ? _buildEditAppBar() : _buildViewAppBar(),
+        ),
+      ),
       body: Stack(
         children: [
-          // Phần nền cong
           ClipPath(
             clipper: BackgroundClipper(),
             child: Container(
-              height: 265,
+              height: 300,
               color: const Color(0xFF5DB075).withAlpha(204),
             ),
           ),
-          // Nội dung chính
           ListView(
             padding: const EdgeInsets.symmetric(horizontal: 40),
             children: [
-              const SizedBox(height: 150),
-              // Avatar
+              const SizedBox(height: 220),
               _buildAvatar(),
               const SizedBox(height: 50),
-              // Các trường thông tin
-              _isEditing
-                  ? _buildEditForm() // Form chỉnh sửa
-                  : _buildInfoDisplay(), // Giao diện hiển thị
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                transitionBuilder: (Widget child, Animation<double> animation) {
+                  return FadeTransition(
+                    opacity: animation,
+                    child: SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(0.0, 0.1),
+                        end: Offset.zero,
+                      ).animate(animation),
+                      child: child,
+                    ),
+                  );
+                },
+                child: _isEditing
+                    ? _buildEditForm(key: const ValueKey('editForm'))
+                    : _buildInfoDisplay(key: const ValueKey('infoDisplay')),
+              ),
             ],
           ),
         ],
@@ -97,85 +137,85 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // Xây dựng AppBar tùy theo trạng thái
-  AppBar _buildAppBar() {
-    if (_isEditing) {
-      return AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => setState(() => _isEditing = false),
-        ),
-        title: const Row(
-          children: [
-            Icon(Icons.edit_outlined, color: Colors.white),
-            SizedBox(width: 8),
-            Text(
-              'Edit Profile',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      );
-    } else {
-      return AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16.0),
-            child: IconButton(
-              icon: const Icon(
-                Icons.edit_outlined,
-                color: Colors.white,
-                size: 30,
-              ),
-              onPressed: () => setState(() => _isEditing = true),
-            ),
+  AppBar _buildViewAppBar() {
+    return AppBar(
+      key: const ValueKey('viewAppBar'),
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      actions: [
+        Padding(
+          padding: const EdgeInsets.only(right: 16.0),
+          child: IconButton(
+            icon:
+                const Icon(Icons.edit_outlined, color: Colors.white, size: 30),
+            onPressed: () => setState(() => _isEditing = true),
           ),
-        ],
-      );
-    }
+        ),
+      ],
+    );
   }
 
-  // Widget hiển thị Avatar
-  Widget _buildAvatar() {
-    return Center(
-      child: Stack(
+  AppBar _buildEditAppBar() {
+    return AppBar(
+      key: const ValueKey('editAppBar'),
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back, color: Colors.white),
+        onPressed: () => setState(() => _isEditing = false),
+      ),
+      title: const Row(
         children: [
-          const CircleAvatar(
-            radius: 70,
-            backgroundImage: NetworkImage('https://i.pravatar.cc/300?img=33'),
-            backgroundColor: Colors.white,
+          Icon(Icons.edit_outlined, color: Colors.white),
+          SizedBox(width: 8),
+          Text(
+            'Edit Profile',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
-          if (_isEditing) // Chỉ hiển thị nút '+' khi ở chế độ edit
-            Positioned(
-              bottom: 0,
-              right: 0,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.black87,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
-                ),
-                child: const Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Icon(Icons.add, color: Colors.white, size: 20),
-                ),
-              ),
-            ),
         ],
       ),
     );
   }
 
-  // Widget hiển thị thông tin (chế độ xem)
-  Widget _buildInfoDisplay() {
+  Widget _buildAvatar() {
+    return Center(
+      child: Stack(
+        children: [
+          const CircleAvatar(
+            radius: 60,
+            backgroundImage: NetworkImage(
+                'https://eric.edu.vn/public/upload/2024/12/anh-gai-xinh-lop-10-09.webp'),
+            backgroundColor: Colors.white,
+          ),
+          AnimatedOpacity(
+            duration: const Duration(milliseconds: 300),
+            opacity: _isEditing ? 1.0 : 0.0,
+            child: _isEditing
+                ? Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black87,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                      child: const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Icon(Icons.add, color: Colors.white, size: 20),
+                      ),
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoDisplay({Key? key}) {
     return Column(
+      key: key,
       children: [
         _buildInfoTile(
           icon: Icons.person_outline,
@@ -183,7 +223,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           subtitle: _nameController.text,
         ),
         _buildInfoTile(
-          icon: Icons.business_center_outlined,
+          icon: Icons.work_outline,
           title: 'Department',
           subtitle: _selectedDepartment,
         ),
@@ -201,9 +241,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // Widget hiển thị form (chế độ chỉnh sửa)
-  Widget _buildEditForm() {
+  Widget _buildEditForm({Key? key}) {
     return Column(
+      key: key,
       children: [
         _buildTextField(label: 'Name', controller: _nameController),
         const SizedBox(height: 20),
@@ -217,7 +257,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           onPressed: _saveProfile,
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF5DB075),
-            padding: const EdgeInsets.symmetric(vertical: 15),
+            minimumSize: const Size(double.infinity, 50),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
@@ -231,7 +271,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // Widget cho từng dòng thông tin (chế độ xem)
   Widget _buildInfoTile({
     required IconData icon,
     required String title,
@@ -242,7 +281,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 30, color: Colors.black54),
+          Icon(icon, size: 30, color: Colors.grey.shade600),
           const SizedBox(width: 25),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -267,7 +306,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // Widget cho trường nhập liệu (chế độ chỉnh sửa)
   Widget _buildTextField({
     required String label,
     required TextEditingController controller,
@@ -299,7 +337,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // Widget cho trường dropdown (chế độ chỉnh sửa)
   Widget _buildDropdownField({required String label}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -308,7 +345,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           label,
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           decoration: BoxDecoration(
@@ -339,17 +376,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 }
 
-// Class để tạo hình dạng cong cho background
 class BackgroundClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     var path = Path();
-    path.lineTo(0, size.height * 0.7);
+    path.lineTo(0, size.height - 50);
     path.quadraticBezierTo(
       size.width / 2,
       size.height,
       size.width,
-      size.height * 0.7,
+      size.height - 50,
     );
     path.lineTo(size.width, 0);
     path.close();

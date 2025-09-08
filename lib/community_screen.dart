@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
@@ -13,80 +14,101 @@ class _CommunityScreenState extends State<CommunityScreen> {
     'Trending',
     'Relationship',
     'Self Care',
-    'Mental Health',
+    'Mental Health'
+  ];
+  final List<Map<String, dynamic>> _posts = [
+    {
+      'avatarUrl': 'https://i.pravatar.cc/150?img=5',
+      'name': 'Coal Dingo',
+      'time': 'just now',
+      'content':
+          'Is there a therapy which can cure crossdressing & bdsm compulsion?',
+      'likes': 2,
+      'comments': 0,
+    },
+    {
+      'avatarUrl': 'https://i.pravatar.cc/150?img=6',
+      'name': 'Pigeon Car',
+      'time': '3 hrs ago',
+      'content':
+          'Is there a therapy which can cure crossdressing & bdsm compulsion?',
+      'likes': 12,
+      'comments': 2,
+    },
+    {
+      'avatarUrl': 'https://i.pravatar.cc/150?img=7',
+      'name': 'Pigeon Car',
+      'time': '1 hr ago',
+      'content':
+          'Is there a therapy which can cure crossdressing & bdsm compulsion?',
+      'likes': 12,
+      'comments': 2,
+    },
+    {
+      'avatarUrl': 'https://i.pravatar.cc/150?img=8',
+      'name': 'Pigeon Car',
+      'time': '2 min ago',
+      'content':
+          'Is there a therapy which can cure crossdressing & bdsm compulsion?',
+      'likes': 12,
+      'comments': 2,
+    },
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.symmetric(vertical: 20.0),
-          children: [
-            // Phần 1: Header
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: _buildHeader(),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
+            child: _buildHeader(),
+          ),
+          const SizedBox(height: 10),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20.0),
+            child: Text(
+              'Wellness Hub',
+              style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 20),
-
-            // Phần 2: Tiêu đề "Wellness Hub"
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20.0),
-              child: Text(
-                'Wellness Hub',
-                style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 20),
+          _buildFilterChips(),
+          const SizedBox(height: 10),
+          Expanded(
+            child: AnimationLimiter(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(0),
+                itemCount: _posts.length,
+                itemBuilder: (context, index) {
+                  final post = _posts[index];
+                  return AnimationConfiguration.staggeredList(
+                    position: index,
+                    duration: const Duration(milliseconds: 375),
+                    child: SlideAnimation(
+                      verticalOffset: 50.0,
+                      child: FadeInAnimation(
+                        child: _buildPostCard(
+                          avatarUrl: post['avatarUrl'],
+                          name: post['name'],
+                          time: post['time'],
+                          content: post['content'],
+                          likes: post['likes'],
+                          comments: post['comments'],
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
-            const SizedBox(height: 20),
-
-            // Phần 3: Các chip lọc
-            _buildFilterChips(),
-            const SizedBox(height: 20),
-
-            // Phần 4: Danh sách các bài đăng
-            _buildPostCard(
-              avatarUrl: 'https://i.pravatar.cc/150?img=5',
-              name: 'Coal Dingo',
-              time: 'just now',
-              content:
-                  'Is there a therapy which can cure crossdressing & bdsm compulsion?',
-              likes: 2,
-              comments: 0,
-            ),
-            _buildPostCard(
-              avatarUrl: 'https://i.pravatar.cc/150?img=6',
-              name: 'Pigeon Car',
-              time: '3 hrs ago',
-              content:
-                  'Is there a therapy which can cure crossdressing & bdsm compulsion?',
-              likes: 12,
-              comments: 2,
-            ),
-            _buildPostCard(
-              avatarUrl: 'https://i.pravatar.cc/150?img=7',
-              name: 'Pigeon Car',
-              time: '1 hr ago',
-              content:
-                  'Is there a therapy which can cure crossdressing & bdsm compulsion?',
-              likes: 12,
-              comments: 2,
-            ),
-            _buildPostCard(
-              avatarUrl: 'https://i.pravatar.cc/150?img=8',
-              name: 'Pigeon Car',
-              time: '2 min ago',
-              content:
-                  'Is there a therapy which can cure crossdressing & bdsm compulsion?',
-              likes: 12,
-              comments: 2,
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {},
-        backgroundColor: const Color(0xFF5DB075), // Màu xanh lá
+        backgroundColor: const Color(0xFF5DB075),
         shape: const CircleBorder(),
         child: const Icon(Icons.edit, color: Colors.white),
       ),
@@ -141,17 +163,15 @@ class _CommunityScreenState extends State<CommunityScreen> {
                 });
               },
               backgroundColor: Colors.grey.shade200,
-              selectedColor: const Color(0xFF5DB075), // Màu xanh lá
+              selectedColor: const Color(0xFF5DB075),
               labelStyle: TextStyle(
-                color: _selectedChipIndex == index
-                    ? Colors.white
-                    : Colors.black54,
+                color:
+                    _selectedChipIndex == index ? Colors.white : Colors.black54,
                 fontWeight: FontWeight.bold,
               ),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-                side: BorderSide(color: Colors.grey.shade300),
-              ),
+                  borderRadius: BorderRadius.circular(20),
+                  side: BorderSide(color: Colors.grey.shade300)),
               showCheckmark: false,
               padding: const EdgeInsets.symmetric(horizontal: 15),
             ),
@@ -193,29 +213,26 @@ class _CommunityScreenState extends State<CommunityScreen> {
             ],
           ),
           const SizedBox(height: 15),
-          Text(content, style: const TextStyle(fontSize: 16, height: 1.4)),
+          Text(
+            content,
+            style: const TextStyle(fontSize: 16, height: 1.4),
+          ),
           const SizedBox(height: 15),
           Row(
             children: [
-              Icon(
-                Icons.thumb_up_alt_outlined,
-                color: Colors.grey.shade600,
-                size: 20,
-              ),
+              Icon(Icons.thumb_up_alt_outlined,
+                  color: Colors.grey.shade600, size: 20),
               const SizedBox(width: 5),
               Text('$likes', style: TextStyle(color: Colors.grey.shade600)),
               const SizedBox(width: 20),
-              Icon(
-                Icons.chat_bubble_outline,
-                color: Colors.grey.shade600,
-                size: 20,
-              ),
+              Icon(Icons.chat_bubble_outline,
+                  color: Colors.grey.shade600, size: 20),
               const SizedBox(width: 5),
               Text('$comments', style: TextStyle(color: Colors.grey.shade600)),
               const Spacer(),
               Icon(Icons.share_outlined, color: Colors.grey.shade600, size: 20),
             ],
-          ),
+          )
         ],
       ),
     );
