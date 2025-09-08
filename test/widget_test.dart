@@ -8,23 +8,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:mentalheal_application_1/main.dart';
+// Giả sử tên project của bạn là 'mental_health_app'.
+// Nếu khác, hãy thay thế 'mental_health_app' bằng tên đúng trong file pubspec.yaml.
+import 'package:mental_health_app/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
+  testWidgets('App loads and displays the main screen',
+      (WidgetTester tester) async {
     // Build our app and trigger a frame.
     await tester.pumpWidget(const MentalHealthApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Xác minh rằng màn hình chính (MainScreen) được hiển thị.
+    expect(find.byType(MainScreen), findsOneWidget);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    // Xác minh rằng BottomNavigationBar có mặt.
+    expect(find.byType(BottomNavigationBar), findsOneWidget);
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Xác minh rằng icon Home được hiển thị.
+    expect(find.byIcon(Icons.home), findsOneWidget);
   });
 }
