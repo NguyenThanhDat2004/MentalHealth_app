@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'l10n/app_localizations.dart';
 import 'home_screen.dart';
 import 'sessions_screen.dart';
 import 'community_screen.dart';
@@ -9,8 +11,27 @@ void main() {
   runApp(const MentalHealthApp());
 }
 
-class MentalHealthApp extends StatelessWidget {
+class MentalHealthApp extends StatefulWidget {
   const MentalHealthApp({super.key});
+
+  @override
+  State<MentalHealthApp> createState() => _MentalHealthAppState();
+
+  static void setLocale(BuildContext context, Locale newLocale) {
+    _MentalHealthAppState? state =
+        context.findAncestorStateOfType<_MentalHealthAppState>();
+    state?.setLocale(newLocale);
+  }
+}
+
+class _MentalHealthAppState extends State<MentalHealthApp> {
+  Locale? _locale;
+
+  void setLocale(Locale locale) {
+    setState(() {
+      _locale = locale;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +46,8 @@ class MentalHealthApp extends StatelessWidget {
       title: 'Mental Health App',
       theme: ThemeData(
         fontFamily: 'Urbanist',
-        scaffoldBackgroundColor: const Color(0xFFF9F9F9),
+        // Cập nhật màu nền chung cho phong cách Liquid Glass
+        scaffoldBackgroundColor: const Color(0xffeaf2f2),
         pageTransitionsTheme: const PageTransitionsTheme(
           builders: {
             TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
@@ -33,6 +55,18 @@ class MentalHealthApp extends StatelessWidget {
           },
         ),
       ),
+      locale: _locale,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en', ''),
+        Locale('vi', ''),
+        Locale('ru', ''),
+      ],
       home: const MainScreen(),
     );
   }
@@ -99,7 +133,6 @@ class _MainScreenState extends State<MainScreen> {
         ),
         child: Stack(
           children: [
-            // Thanh chỉ báo trượt mượt mà
             AnimatedPositioned(
               duration: const Duration(milliseconds: 350),
               curve: Curves.easeInOutCubic,
@@ -116,7 +149,6 @@ class _MainScreenState extends State<MainScreen> {
                 ),
               ),
             ),
-            // Đã sửa: Thay thế BottomNavigationBar bằng Row
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -133,7 +165,6 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  // Widget trợ giúp để tạo từng mục điều hướng
   Widget _buildNavItem(IconData icon, int index) {
     return Expanded(
       child: GestureDetector(
@@ -142,7 +173,7 @@ class _MainScreenState extends State<MainScreen> {
             _currentIndex = index;
           });
         },
-        behavior: HitTestBehavior.opaque, // Đảm bảo toàn bộ khu vực có thể nhấn
+        behavior: HitTestBehavior.opaque,
         child: Center(
           child: Icon(
             icon,

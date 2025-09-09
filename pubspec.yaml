@@ -12,9 +12,11 @@ dependencies:
   flutter:
     sdk: flutter
   
-  # Gói để tạo hiệu ứng chuyển động cho danh sách
-  flutter_staggered_animations: ^1.1.1
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.2
 
+  flutter_staggered_animations: ^1.1.1
   cupertino_icons: ^1.0.2
 
 dev_dependencies:
@@ -24,13 +26,11 @@ dev_dependencies:
   flutter_lints: ^2.0.0
 
 flutter:
+  generate: true
   uses-material-design: true
-
-  # Khai báo font chữ (hãy chắc chắn bạn đã tạo thư mục assets/fonts)
   fonts:
     - family: Urbanist
       fonts:
         - asset: assets/fonts/Urbanist-Regular.ttf
         - asset: assets/fonts/Urbanist-Bold.ttf
           weight: 700
-
