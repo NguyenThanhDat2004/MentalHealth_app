@@ -4,8 +4,9 @@ import 'l10n/app_localizations.dart';
 import 'widgets/liquid_background.dart';
 import 'widgets/glass_card.dart';
 
+/// HomeScreen displays the main dashboard UI for the user.
 class HomeScreen extends StatefulWidget {
-  final String userName;
+  final String userName; // Username passed from parent widget
   const HomeScreen({super.key, required this.userName});
 
   @override
@@ -13,12 +14,14 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  // Flag to simulate whether the subscription/plan is expired
   final bool _isPlanExpired = false;
 
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
 
+    // Build a list of widgets that compose the home screen content
     List<Widget> children = [
       _isPlanExpired
           ? _buildSimpleHeader()
@@ -48,8 +51,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Stack(
       children: [
-        const LiquidBackground(),
+        const LiquidBackground(), // Animated liquid background
         AnimationLimiter(
+          // Animate each child in the list view
           child: ListView.builder(
             padding: const EdgeInsets.all(20.0),
             itemCount: children.length,
@@ -71,14 +75,14 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Các hàm build widget đã được cập nhật để loại bỏ decoration bên trong
-  // và sử dụng GlassCard bên ngoài
+  /// Header with greeting, avatar, and notification icon
   Widget _buildGreetingHeader(AppLocalizations localizations) {
     return GlassCard(
       margin: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Top row with avatar + notifications
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -104,6 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           const SizedBox(height: 20),
+          // Greeting texts
           Text(
             localizations.goodAfternoon,
             style: const TextStyle(
@@ -123,6 +128,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Session booking card with description and button
   Widget _buildSessionCard() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -149,12 +155,14 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
+        // Icon aligned to the right
         Icon(Icons.people_alt,
             size: 50, color: const Color(0xFFF2994A).withAlpha(204)),
       ],
     );
   }
 
+  /// Motivational quote card
   Widget _buildQuoteCard() {
     return const Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -176,7 +184,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Các widget còn lại không thay đổi nhiều
+  /// Simpler header when plan is expired
   Widget _buildSimpleHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -210,6 +218,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Mood selection with icons (used when plan expired)
   Widget _buildIconMoodSelection() {
     return const Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -237,6 +246,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Mood selection with emojis (default)
   Widget _buildEmojiMoodSelection() {
     return const Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -251,6 +261,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Action buttons row (Journal, Library)
   Widget _buildActionButtons() {
     return Row(
       children: [
@@ -261,6 +272,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Single action button builder
   Widget _actionButton(IconData icon, String label) {
     return ElevatedButton.icon(
       onPressed: () {},
@@ -277,6 +289,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
+/// Emoji-based mood widget (used when plan is active)
 class _EmojiMoodWidget extends StatelessWidget {
   final String emoji;
   final String text;
@@ -303,6 +316,7 @@ class _EmojiMoodWidget extends StatelessWidget {
         ],
       ),
     );
+    // Show only half if isPartial is true
     if (isPartial) {
       return ClipRect(
           child: Align(
@@ -314,6 +328,7 @@ class _EmojiMoodWidget extends StatelessWidget {
   }
 }
 
+/// Icon-based mood widget (used when plan is expired)
 class _IconMoodWidget extends StatelessWidget {
   final IconData icon;
   final String text;
@@ -344,6 +359,7 @@ class _IconMoodWidget extends StatelessWidget {
                 fontWeight: FontWeight.w600, color: Colors.grey)),
       ],
     );
+    // Show only half if isPartial is true
     if (isPartial) {
       return ClipRect(
           child: Align(

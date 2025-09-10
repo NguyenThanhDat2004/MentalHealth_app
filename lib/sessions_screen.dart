@@ -4,12 +4,16 @@ import 'l10n/app_localizations.dart';
 import 'widgets/liquid_background.dart';
 import 'widgets/glass_card.dart';
 
+// Screen that displays therapy/consultation sessions
 class SessionsScreen extends StatelessWidget {
   const SessionsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // Load localization for translated strings
     final localizations = AppLocalizations.of(context)!;
+
+    // Example session data (normally would come from API or database)
     final List<Map<String, dynamic>> sessions = [
       {
         'imageUrl': 'https://i.pravatar.cc/150?img=1',
@@ -31,21 +35,30 @@ class SessionsScreen extends StatelessWidget {
 
     return Stack(
       children: [
+        // Background animation effect
         const LiquidBackground(),
+
+        // List of session cards with entry animations
         AnimationLimiter(
           child: ListView.builder(
             padding: const EdgeInsets.all(20.0),
+            // +3 for header, upcoming session, and "all sessions" header
             itemCount: sessions.length + 3,
             itemBuilder: (context, index) {
               Widget child;
+
               if (index == 0) {
+                // Top bar with profile avatar and notifications
                 child = _buildHeader();
               } else if (index == 1) {
+                // Highlighted "Upcoming session" card
                 child =
                     GlassCard(child: _buildUpcomingSessionCard(localizations));
               } else if (index == 2) {
+                // Section header for all sessions
                 child = _buildAllSessionsHeader(localizations);
               } else {
+                // Session list item
                 final sessionIndex = index - 3;
                 final session = sessions[sessionIndex];
                 child = GlassCard(
@@ -60,11 +73,15 @@ class SessionsScreen extends StatelessWidget {
                   ),
                 );
               }
+
+              // Apply staggered animations for smooth UI
               return AnimationConfiguration.staggeredList(
                 position: index,
                 duration: const Duration(milliseconds: 375),
                 child: SlideAnimation(
-                    verticalOffset: 50.0, child: FadeInAnimation(child: child)),
+                  verticalOffset: 50.0,
+                  child: FadeInAnimation(child: child),
+                ),
               );
             },
           ),
@@ -73,7 +90,7 @@ class SessionsScreen extends StatelessWidget {
     );
   }
 
-  // Các hàm build widget không thay đổi nhiều, chỉ bỏ decoration bên trong
+  // Top header with avatar and notification icon
   Widget _buildHeader() {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10.0),
@@ -81,14 +98,15 @@ class SessionsScreen extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           const CircleAvatar(
-              radius: 25,
-              backgroundImage:
-                  NetworkImage('https://i.pravatar.cc/150?img=32')),
+            radius: 25,
+            backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=32'),
+          ),
           Stack(
             alignment: Alignment.topRight,
             children: [
               const Icon(Icons.notifications_none,
                   size: 30, color: Colors.grey),
+              // Notification badge
               Container(
                 padding: const EdgeInsets.all(5),
                 decoration: const BoxDecoration(
@@ -103,6 +121,7 @@ class SessionsScreen extends StatelessWidget {
     );
   }
 
+  // Upcoming session card (highlighted at the top)
   Widget _buildUpcomingSessionCard(AppLocalizations localizations) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -131,6 +150,7 @@ class SessionsScreen extends StatelessWidget {
     );
   }
 
+  // Section header for "All Sessions"
   Widget _buildAllSessionsHeader(AppLocalizations localizations) {
     return Padding(
       padding: const EdgeInsets.only(top: 20, bottom: 10, left: 10, right: 10),
@@ -151,6 +171,7 @@ class SessionsScreen extends StatelessWidget {
     );
   }
 
+  // Session card (either upcoming or completed)
   Widget _buildSessionCard({
     required AppLocalizations localizations,
     required String imageUrl,
@@ -162,6 +183,7 @@ class SessionsScreen extends StatelessWidget {
   }) {
     return Column(
       children: [
+        // Therapist info row
         Row(
           children: [
             CircleAvatar(radius: 25, backgroundImage: NetworkImage(imageUrl)),
@@ -181,6 +203,7 @@ class SessionsScreen extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 15),
+        // Date and time row
         Row(
           children: [
             const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
@@ -193,6 +216,7 @@ class SessionsScreen extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 20),
+        // Action buttons: depends on whether session is completed or upcoming
         isCompleted
             ? _buildCompletedButtons(localizations)
             : _buildUpcomingButtons(localizations),
@@ -200,6 +224,7 @@ class SessionsScreen extends StatelessWidget {
     );
   }
 
+  // Buttons for upcoming sessions: "Reschedule" and "Join Now"
   Widget _buildUpcomingButtons(AppLocalizations localizations) {
     return Row(
       children: [
@@ -232,6 +257,7 @@ class SessionsScreen extends StatelessWidget {
     );
   }
 
+  // Buttons for completed sessions: "Rebook" and "View Profile"
   Widget _buildCompletedButtons(AppLocalizations localizations) {
     return Row(
       children: [

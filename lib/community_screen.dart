@@ -3,6 +3,7 @@ import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'l10n/app_localizations.dart';
 import 'widgets/liquid_background.dart';
 import 'widgets/glass_card.dart';
+import 'ai_chat_screen.dart';
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
@@ -22,7 +23,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
       'content':
           'Is there a therapy which can cure crossdressing & bdsm compulsion?',
       'likes': 2,
-      'comments': 0
+      'comments': 0,
     },
     {
       'avatarUrl': 'https://i.pravatar.cc/150?img=6',
@@ -31,7 +32,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
       'content':
           'Is there a therapy which can cure crossdressing & bdsm compulsion?',
       'likes': 12,
-      'comments': 2
+      'comments': 2,
     },
   ];
 
@@ -106,11 +107,17 @@ class _CommunityScreenState extends State<CommunityScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AiChatScreen()),
+          );
+        },
         backgroundColor: const Color(0xFF5DB075),
-        shape: const CircleBorder(),
-        child: const Icon(Icons.edit, color: Colors.white),
+        icon: const Icon(Icons.chat_bubble_outline, color: Colors.white),
+        label: const Text("AI Companion",
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
     );
   }
@@ -157,8 +164,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                   _selectedChipIndex = selected ? index : -1;
                 });
               },
-              // Đã sửa lỗi
-              backgroundColor: Colors.white.withAlpha(128), // 0.5 opacity
+              backgroundColor: Colors.white.withAlpha(128),
               selectedColor: const Color(0xFF5DB075),
               labelStyle: TextStyle(
                   color: _selectedChipIndex == index
@@ -167,9 +173,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                   fontWeight: FontWeight.bold),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
-                  // Đã sửa lỗi
-                  side: BorderSide(
-                      color: Colors.white.withAlpha(204))), // 0.8 opacity
+                  side: BorderSide(color: Colors.white.withAlpha(204))),
               showCheckmark: false,
               padding: const EdgeInsets.symmetric(horizontal: 15),
             ),

@@ -11,12 +11,14 @@ void main() {
   runApp(const MentalHealthApp());
 }
 
+/// Root widget of the application
 class MentalHealthApp extends StatefulWidget {
   const MentalHealthApp({super.key});
 
   @override
   State<MentalHealthApp> createState() => _MentalHealthAppState();
 
+  /// Allows changing app locale dynamically from anywhere in the widget tree
   static void setLocale(BuildContext context, Locale newLocale) {
     _MentalHealthAppState? state =
         context.findAncestorStateOfType<_MentalHealthAppState>();
@@ -25,7 +27,7 @@ class MentalHealthApp extends StatefulWidget {
 }
 
 class _MentalHealthAppState extends State<MentalHealthApp> {
-  Locale? _locale;
+  Locale? _locale; // Stores the currently selected locale
 
   void setLocale(Locale locale) {
     setState(() {
@@ -35,19 +37,20 @@ class _MentalHealthAppState extends State<MentalHealthApp> {
 
   @override
   Widget build(BuildContext context) {
+    // Set system UI overlay style (status bar appearance)
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.dark,
       ),
     );
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Mental Health App',
       theme: ThemeData(
         fontFamily: 'Urbanist',
-        // Cập nhật màu nền chung cho phong cách Liquid Glass
-        scaffoldBackgroundColor: const Color(0xffeaf2f2),
+        scaffoldBackgroundColor: const Color(0xFFF9F9F9),
         pageTransitionsTheme: const PageTransitionsTheme(
           builders: {
             TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
@@ -55,23 +58,27 @@ class _MentalHealthAppState extends State<MentalHealthApp> {
           },
         ),
       ),
+      // Apply current locale
       locale: _locale,
+      // Localization delegates
       localizationsDelegates: const [
-        AppLocalizations.delegate,
+        AppLocalizations.delegate, // Custom app localizations
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
+      // Supported languages
       supportedLocales: const [
-        Locale('en', ''),
-        Locale('vi', ''),
-        Locale('ru', ''),
+        Locale('en', ''), // English
+        Locale('vi', ''), // Vietnamese
+        Locale('ru', ''), // Russian
       ],
       home: const MainScreen(),
     );
   }
 }
 
+/// MainScreen manages the bottom navigation and main pages
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
@@ -80,9 +87,10 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0;
-  String _userName = 'Thanh Dat';
+  int _currentIndex = 0; // Track current bottom navigation index
+  String _userName = 'What is your name?'; // User’s displayed name
 
+  /// Update the username when changed from Profile screen
   void _updateUserName(String newName) {
     setState(() {
       _userName = newName;
@@ -91,6 +99,7 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Pages controlled by bottom navigation
     final List<Widget> pages = [
       HomeScreen(userName: _userName),
       const SessionsScreen(),
@@ -101,6 +110,7 @@ class _MainScreenState extends State<MainScreen> {
       ),
     ];
 
+    // Calculate navigation bar item width for indicator animation
     final screenWidth = MediaQuery.of(context).size.width;
     const itemCount = 4;
     final itemWidth = screenWidth / itemCount;
@@ -113,6 +123,7 @@ class _MainScreenState extends State<MainScreen> {
           transitionBuilder: (Widget child, Animation<double> animation) {
             return FadeTransition(opacity: animation, child: child);
           },
+          // KeyedSubtree ensures widget state resets when switching pages
           child: KeyedSubtree(
             key: ValueKey<int>(_currentIndex),
             child: pages[_currentIndex],
@@ -133,6 +144,7 @@ class _MainScreenState extends State<MainScreen> {
         ),
         child: Stack(
           children: [
+            /// Smooth sliding indicator at the top of the navigation bar
             AnimatedPositioned(
               duration: const Duration(milliseconds: 350),
               curve: Curves.easeInOutCubic,
@@ -149,6 +161,8 @@ class _MainScreenState extends State<MainScreen> {
                 ),
               ),
             ),
+
+            /// Custom bottom navigation using Row instead of BottomNavigationBar
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -165,6 +179,7 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
+  /// Build a single navigation item
   Widget _buildNavItem(IconData icon, int index) {
     return Expanded(
       child: GestureDetector(
@@ -173,14 +188,15 @@ class _MainScreenState extends State<MainScreen> {
             _currentIndex = index;
           });
         },
+        // Ensure the whole area is tappable
         behavior: HitTestBehavior.opaque,
         child: Center(
           child: Icon(
             icon,
             size: 30,
             color: _currentIndex == index
-                ? const Color(0xFF5DB075)
-                : Colors.grey.shade400,
+                ? const Color(0xFF5DB075) // Active item color
+                : Colors.grey.shade400, // Inactive item color
           ),
         ),
       ),

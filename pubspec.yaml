@@ -2,35 +2,53 @@ name: mental_health_app
 description: A new Flutter project.
 
 publish_to: 'none' 
+# Prevents publishing to pub.dev (useful for private/local projects)
 
 version: 1.0.0+1
+# Versioning format: major.minor.patch+build
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
+  # Dart SDK constraints (requires Dart 3.x)
 
 dependencies:
   flutter:
     sdk: flutter
-  
+    # The core Flutter SDK
+
   flutter_localizations:
     sdk: flutter
+    # Provides localization (multi-language) support
+
   intl: ^0.20.2
+    # Internationalization and formatting (dates, numbers, messages)
+
+  google_generative_ai: ^0.3.0
+    # Google Generative AI package (used for AI/LLM integration)
 
   flutter_staggered_animations: ^1.1.1
+    # Provides staggered animations for lists and grids
+
   cupertino_icons: ^1.0.2
+    # iOS-style icons (default Flutter package)
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+    # Testing framework for Flutter apps
 
   flutter_lints: ^2.0.0
+    # Official Flutter lint rules (helps enforce clean code style)
 
 flutter:
   generate: true
   uses-material-design: true
+  # Enables Material Design icons and widgets
+
   fonts:
     - family: Urbanist
       fonts:
         - asset: assets/fonts/Urbanist-Regular.ttf
         - asset: assets/fonts/Urbanist-Bold.ttf
           weight: 700
+    # Custom font family (Urbanist) with regular and bold variants
