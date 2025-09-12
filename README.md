@@ -16,6 +16,7 @@ Cập nhật theo thời gian thực: Màn hình chính tự động cập nhậ
 
 Hiệu ứng chuyển động mượt mà: Tất cả các tương tác, từ chuyển đổi màn hình đến hiển thị danh sách, đều được trang bị các hiệu ứng animation tinh tế.
 Thanh điều hướng cong (Curved Navigation Bar): Sử dụng một thanh điều hướng cong độc đáo với hiệu ứng chuyển động mượt mà.
+<img width="1290" height="2796" alt="image" src="https://github.com/user-attachments/assets/8aedbdc8-8aa2-49bf-b08c-93e8b15a7905" />
 
 Bắt đầu
 Để chạy dự án này trên máy của bạn, hãy làm theo các bước sau:
@@ -56,11 +57,11 @@ Cấu trúc dự án
 Dự án được tổ chức một cách rõ ràng để dễ dàng bảo trì và mở rộng:
 
 lib/
-├── l10n/                 # Chứa các tệp dịch (.arb)
-├── widgets/              # Chứa các widget có thể tái sử dụng (LiquidBackground, GlassCard)
-├── ai_chat_screen.dart   # Màn hình trò chuyện với AI
-├── community_screen.dart # Màn hình Cộng đồng
-├── home_screen.dart      # Màn hình chính
-├── main.dart             # Điểm vào chính, quản lý điều hướng và trạng thái chung
-├── profile_screen.dart   # Màn hình Hồ sơ người dùng
-└── sessions_screen.dart  # Màn hình các buổi học
+  l10n/                 # Chứa các tệp dịch (.arb)
+  widgets/              # Chứa các widget có thể tái sử dụng (LiquidBackground, GlassCard)
+  ai_chat_screen.dart   # Màn hình trò chuyện với AI
+  community_screen.dart # Màn hình Cộng đồng
+  home_screen.dart      # Màn hình chính
+  main.dart             # Điểm vào chính, quản lý điều hướng và trạng thái chung
+  profile_screen.dart   # Màn hình Hồ sơ người dùng
+  sessions_screen.dart  # Màn hình các buổi học
