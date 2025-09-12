@@ -56,9 +56,9 @@ flutter run
 Cấu trúc dự án
 Dự án được tổ chức một cách rõ ràng để dễ dàng bảo trì và mở rộng:
 
-lib/
-  l10n/                 # Chứa các tệp dịch (.arb)
-  widgets/              # Chứa các widget có thể tái sử dụng (LiquidBackground, GlassCard)
+lib
+  l10n                   # Chứa các tệp dịch (.arb)
+  widgets                # Chứa các widget có thể tái sử dụng (LiquidBackground, GlassCard)
   ai_chat_screen.dart   # Màn hình trò chuyện với AI
   community_screen.dart # Màn hình Cộng đồng
   home_screen.dart      # Màn hình chính
