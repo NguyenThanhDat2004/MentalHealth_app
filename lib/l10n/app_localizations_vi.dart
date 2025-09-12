@@ -21,7 +21,16 @@ class AppLocalizationsVi extends AppLocalizations {
   String get profile => 'Hồ sơ';
 
   @override
+  String get goodMorning => 'Chào buổi sáng,';
+
+  @override
+  String get goodNoon => 'Chào buổi trưa,';
+
+  @override
   String get goodAfternoon => 'Chào buổi chiều,';
+
+  @override
+  String get goodEvening => 'Chào buổi tối,';
 
   @override
   String get howAreYouFeeling => 'Bạn cảm thấy thế nào hôm nay?';

@@ -1,19 +1,20 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'l10n/app_localizations.dart';
 import 'widgets/liquid_background.dart';
 import 'widgets/glass_card.dart';
 
-// Screen that displays therapy/consultation sessions
+/// Screen that displays user's therapy/mental health sessions
 class SessionsScreen extends StatelessWidget {
-  const SessionsScreen({super.key});
+  final String? avatarPath;
+  const SessionsScreen({super.key, this.avatarPath});
 
   @override
   Widget build(BuildContext context) {
-    // Load localization for translated strings
     final localizations = AppLocalizations.of(context)!;
 
-    // Example session data (normally would come from API or database)
+    /// Dummy list of sessions (could later be fetched from API/database)
     final List<Map<String, dynamic>> sessions = [
       {
         'imageUrl': 'https://i.pravatar.cc/150?img=1',
@@ -21,7 +22,7 @@ class SessionsScreen extends StatelessWidget {
         'specialty': 'Msc in Clinical Psychology',
         'date': '31st March ‘22',
         'time': '7:30 PM - 8:30 PM',
-        'isCompleted': false
+        'isCompleted': false,
       },
       {
         'imageUrl': 'https://i.pravatar.cc/150?img=2',
@@ -29,36 +30,40 @@ class SessionsScreen extends StatelessWidget {
         'specialty': 'Msc in Clinical Psychology',
         'date': '31st March ‘22',
         'time': '7:30 PM - 8:30 PM',
-        'isCompleted': true
+        'isCompleted': true,
+      },
+      {
+        'imageUrl': 'https://i.pravatar.cc/150?img=4',
+        'name': 'Sahana V',
+        'specialty': 'Msc in Clinical Psychology',
+        'date': '1st April ‘22',
+        'time': '7:30 PM - 8:30 PM',
+        'isCompleted': false,
       },
     ];
 
     return Stack(
       children: [
-        // Background animation effect
+        /// Wavy animated background
         const LiquidBackground(),
 
-        // List of session cards with entry animations
+        /// Animated list of sessions
         AnimationLimiter(
           child: ListView.builder(
             padding: const EdgeInsets.all(20.0),
-            // +3 for header, upcoming session, and "all sessions" header
-            itemCount: sessions.length + 3,
+            itemCount: sessions.length + 3, // 3 = header + upcoming + title
             itemBuilder: (context, index) {
               Widget child;
 
               if (index == 0) {
-                // Top bar with profile avatar and notifications
                 child = _buildHeader();
               } else if (index == 1) {
-                // Highlighted "Upcoming session" card
                 child =
                     GlassCard(child: _buildUpcomingSessionCard(localizations));
               } else if (index == 2) {
-                // Section header for all sessions
                 child = _buildAllSessionsHeader(localizations);
               } else {
-                // Session list item
+                /// Show individual session cards
                 final sessionIndex = index - 3;
                 final session = sessions[sessionIndex];
                 child = GlassCard(
@@ -74,7 +79,7 @@ class SessionsScreen extends StatelessWidget {
                 );
               }
 
-              // Apply staggered animations for smooth UI
+              /// Animate each item as it appears
               return AnimationConfiguration.staggeredList(
                 position: index,
                 duration: const Duration(milliseconds: 375),
@@ -90,29 +95,37 @@ class SessionsScreen extends StatelessWidget {
     );
   }
 
-  // Top header with avatar and notification icon
+  /// Top header with user avatar + notifications
   Widget _buildHeader() {
+    final ImageProvider avatarImage = avatarPath != null
+        ? (avatarPath!.startsWith('http')
+            ? NetworkImage(avatarPath!)
+            : FileImage(File(avatarPath!))) as ImageProvider
+        : const NetworkImage('https://i.pravatar.cc/150?img=32');
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 10.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const CircleAvatar(
-            radius: 25,
-            backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=32'),
-          ),
+          CircleAvatar(radius: 25, backgroundImage: avatarImage),
           Stack(
             alignment: Alignment.topRight,
             children: [
               const Icon(Icons.notifications_none,
                   size: 30, color: Colors.grey),
-              // Notification badge
+
+              /// Small red badge showing notification count
               Container(
                 padding: const EdgeInsets.all(5),
                 decoration: const BoxDecoration(
-                    color: Colors.red, shape: BoxShape.circle),
-                child: const Text('3',
-                    style: TextStyle(color: Colors.white, fontSize: 10)),
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                ),
+                child: const Text(
+                  '3',
+                  style: TextStyle(color: Colors.white, fontSize: 10),
+                ),
               ),
             ],
           ),
@@ -121,7 +134,7 @@ class SessionsScreen extends StatelessWidget {
     );
   }
 
-  // Upcoming session card (highlighted at the top)
+  /// Card showing the upcoming session
   Widget _buildUpcomingSessionCard(AppLocalizations localizations) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -129,19 +142,23 @@ class SessionsScreen extends StatelessWidget {
         Text(localizations.upcomingSession,
             style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
         const SizedBox(height: 10),
-        const Text('Sahana V. Msc in Clinical Psychology',
-            style: TextStyle(color: Colors.black54, fontSize: 15)),
+        const Text(
+          'Sahana V. Msc in Clinical Psychology',
+          style: TextStyle(color: Colors.black54, fontSize: 15),
+        ),
         const SizedBox(height: 5),
         const Text('7:30 PM - 8:30 PM',
             style: TextStyle(color: Colors.black54, fontSize: 15)),
         const SizedBox(height: 20),
         Row(
           children: [
-            Text(localizations.joinNow,
-                style: const TextStyle(
-                    color: Color(0xFF5DB075),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18)),
+            Text(
+              localizations.joinNow,
+              style: const TextStyle(
+                  color: Color(0xFF5DB075),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18),
+            ),
             const SizedBox(width: 8),
             const Icon(Icons.play_circle_fill, color: Color(0xFF5DB075)),
           ],
@@ -150,7 +167,7 @@ class SessionsScreen extends StatelessWidget {
     );
   }
 
-  // Section header for "All Sessions"
+  /// Section title: "All Sessions"
   Widget _buildAllSessionsHeader(AppLocalizations localizations) {
     return Padding(
       padding: const EdgeInsets.only(top: 20, bottom: 10, left: 10, right: 10),
@@ -171,7 +188,7 @@ class SessionsScreen extends StatelessWidget {
     );
   }
 
-  // Session card (either upcoming or completed)
+  /// Card displaying one session's details
   Widget _buildSessionCard({
     required AppLocalizations localizations,
     required String imageUrl,
@@ -183,7 +200,7 @@ class SessionsScreen extends StatelessWidget {
   }) {
     return Column(
       children: [
-        // Therapist info row
+        /// Doctor profile
         Row(
           children: [
             CircleAvatar(radius: 25, backgroundImage: NetworkImage(imageUrl)),
@@ -203,7 +220,8 @@ class SessionsScreen extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 15),
-        // Date and time row
+
+        /// Date + Time row
         Row(
           children: [
             const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
@@ -216,7 +234,8 @@ class SessionsScreen extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 20),
-        // Action buttons: depends on whether session is completed or upcoming
+
+        /// Show action buttons depending on session status
         isCompleted
             ? _buildCompletedButtons(localizations)
             : _buildUpcomingButtons(localizations),
@@ -224,7 +243,7 @@ class SessionsScreen extends StatelessWidget {
     );
   }
 
-  // Buttons for upcoming sessions: "Reschedule" and "Join Now"
+  /// Buttons for upcoming session (Reschedule / Join Now)
   Widget _buildUpcomingButtons(AppLocalizations localizations) {
     return Row(
       children: [
@@ -232,10 +251,11 @@ class SessionsScreen extends StatelessWidget {
           child: ElevatedButton(
             onPressed: () {},
             style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF5DB075),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15)),
-                padding: const EdgeInsets.symmetric(vertical: 15)),
+              backgroundColor: const Color(0xFF5DB075),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15)),
+              padding: const EdgeInsets.symmetric(vertical: 15),
+            ),
             child: Text(localizations.reschedule,
                 style: const TextStyle(color: Colors.white, fontSize: 16)),
           ),
@@ -245,10 +265,11 @@ class SessionsScreen extends StatelessWidget {
           child: OutlinedButton(
             onPressed: () {},
             style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFF5DB075)),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15)),
-                padding: const EdgeInsets.symmetric(vertical: 15)),
+              side: const BorderSide(color: Color(0xFF5DB075)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15)),
+              padding: const EdgeInsets.symmetric(vertical: 15),
+            ),
             child: Text(localizations.joinNow,
                 style: const TextStyle(color: Color(0xFF5DB075), fontSize: 16)),
           ),
@@ -257,7 +278,7 @@ class SessionsScreen extends StatelessWidget {
     );
   }
 
-  // Buttons for completed sessions: "Rebook" and "View Profile"
+  /// Buttons for completed session (Rebook / View Profile)
   Widget _buildCompletedButtons(AppLocalizations localizations) {
     return Row(
       children: [
@@ -265,10 +286,11 @@ class SessionsScreen extends StatelessWidget {
           child: ElevatedButton(
             onPressed: () {},
             style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF5DB075),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15)),
-                padding: const EdgeInsets.symmetric(vertical: 15)),
+              backgroundColor: const Color(0xFF5DB075),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15)),
+              padding: const EdgeInsets.symmetric(vertical: 15),
+            ),
             child: Text(localizations.rebook,
                 style: const TextStyle(color: Colors.white, fontSize: 16)),
           ),
@@ -278,10 +300,11 @@ class SessionsScreen extends StatelessWidget {
           child: OutlinedButton(
             onPressed: () {},
             style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFF5DB075)),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15)),
-                padding: const EdgeInsets.symmetric(vertical: 15)),
+              side: const BorderSide(color: Color(0xFF5DB075)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15)),
+              padding: const EdgeInsets.symmetric(vertical: 15),
+            ),
             child: Text(localizations.viewProfile,
                 style: const TextStyle(color: Color(0xFF5DB075), fontSize: 16)),
           ),

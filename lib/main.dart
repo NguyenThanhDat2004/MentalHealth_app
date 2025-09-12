@@ -2,23 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'l10n/app_localizations.dart';
+import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'home_screen.dart';
 import 'sessions_screen.dart';
 import 'community_screen.dart';
 import 'profile_screen.dart';
 
 void main() {
+  // Entry point of the Flutter app
   runApp(const MentalHealthApp());
 }
 
-/// Root widget of the application
 class MentalHealthApp extends StatefulWidget {
   const MentalHealthApp({super.key});
 
   @override
   State<MentalHealthApp> createState() => _MentalHealthAppState();
 
-  /// Allows changing app locale dynamically from anywhere in the widget tree
+  // Static method to change locale dynamically from anywhere in the app
   static void setLocale(BuildContext context, Locale newLocale) {
     _MentalHealthAppState? state =
         context.findAncestorStateOfType<_MentalHealthAppState>();
@@ -27,8 +28,9 @@ class MentalHealthApp extends StatefulWidget {
 }
 
 class _MentalHealthAppState extends State<MentalHealthApp> {
-  Locale? _locale; // Stores the currently selected locale
+  Locale? _locale;
 
+  // Updates the locale (language)
   void setLocale(Locale locale) {
     setState(() {
       _locale = locale;
@@ -37,7 +39,7 @@ class _MentalHealthAppState extends State<MentalHealthApp> {
 
   @override
   Widget build(BuildContext context) {
-    // Set system UI overlay style (status bar appearance)
+    // Configure system UI (transparent status bar, dark icons)
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -50,7 +52,8 @@ class _MentalHealthAppState extends State<MentalHealthApp> {
       title: 'Mental Health App',
       theme: ThemeData(
         fontFamily: 'Urbanist',
-        scaffoldBackgroundColor: const Color(0xFFF9F9F9),
+        scaffoldBackgroundColor: const Color(0xffeaf2f2),
+        // Custom page transition animations
         pageTransitionsTheme: const PageTransitionsTheme(
           builders: {
             TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
@@ -58,27 +61,23 @@ class _MentalHealthAppState extends State<MentalHealthApp> {
           },
         ),
       ),
-      // Apply current locale
-      locale: _locale,
-      // Localization delegates
+      locale: _locale, // Current locale (if set by user)
       localizationsDelegates: const [
-        AppLocalizations.delegate, // Custom app localizations
+        AppLocalizations.delegate, // Custom app localization
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      // Supported languages
       supportedLocales: const [
         Locale('en', ''), // English
         Locale('vi', ''), // Vietnamese
         Locale('ru', ''), // Russian
       ],
-      home: const MainScreen(),
+      home: const MainScreen(), // Entry screen after launch
     );
   }
 }
 
-/// MainScreen manages the bottom navigation and main pages
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
@@ -87,118 +86,92 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0; // Track current bottom navigation index
-  String _userName = 'What is your name?'; // User’s displayed name
+  int _currentIndex = 0; // Index of the selected bottom nav item
+  String _userName = 'Thanh Dat'; // Default username
+  String? _avatarPath; // Avatar image path (nullable)
 
-  /// Update the username when changed from Profile screen
+  // Update username when changed in ProfileScreen
   void _updateUserName(String newName) {
     setState(() {
       _userName = newName;
     });
   }
 
+  // Update avatar path when changed in ProfileScreen
+  void _updateUserAvatar(String newPath) {
+    setState(() {
+      _avatarPath = newPath;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Pages controlled by bottom navigation
+    // Pages for bottom navigation, passing avatar and username where needed
     final List<Widget> pages = [
-      HomeScreen(userName: _userName),
-      const SessionsScreen(),
-      const CommunityScreen(),
+      HomeScreen(
+        userName: _userName,
+        avatarPath: _avatarPath,
+      ),
+      SessionsScreen(avatarPath: _avatarPath),
+      CommunityScreen(avatarPath: _avatarPath),
       ProfileScreen(
         initialName: _userName,
         onNameUpdated: _updateUserName,
+        initialAvatarPath: _avatarPath,
+        onAvatarUpdated: _updateUserAvatar,
       ),
     ];
 
-    // Calculate navigation bar item width for indicator animation
-    final screenWidth = MediaQuery.of(context).size.width;
-    const itemCount = 4;
-    final itemWidth = screenWidth / itemCount;
-    const indicatorWidth = 40.0;
+    // Bottom navigation bar items
+    final items = <Widget>[
+      Icon(Icons.home,
+          size: 30,
+          color: _currentIndex == 0
+              ? const Color(0xFF5DB075)
+              : Colors.grey.shade500),
+      Icon(Icons.videocam_outlined,
+          size: 30,
+          color: _currentIndex == 1
+              ? const Color(0xFF5DB075)
+              : Colors.grey.shade500),
+      Icon(Icons.chat_bubble_outline,
+          size: 30,
+          color: _currentIndex == 2
+              ? const Color(0xFF5DB075)
+              : Colors.grey.shade500),
+      Icon(Icons.people_outline,
+          size: 30,
+          color: _currentIndex == 3
+              ? const Color(0xFF5DB075)
+              : Colors.grey.shade500),
+    ];
 
     return Scaffold(
+      extendBody: true,
       body: SafeArea(
+        bottom: false,
         child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 300),
           transitionBuilder: (Widget child, Animation<double> animation) {
             return FadeTransition(opacity: animation, child: child);
           },
-          // KeyedSubtree ensures widget state resets when switching pages
+          // Switches between pages with animation
           child: KeyedSubtree(
             key: ValueKey<int>(_currentIndex),
             child: pages[_currentIndex],
           ),
         ),
       ),
-      bottomNavigationBar: Container(
-        height:
-            kBottomNavigationBarHeight + MediaQuery.of(context).padding.bottom,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 10,
-            ),
-          ],
-        ),
-        child: Stack(
-          children: [
-            /// Smooth sliding indicator at the top of the navigation bar
-            AnimatedPositioned(
-              duration: const Duration(milliseconds: 350),
-              curve: Curves.easeInOutCubic,
-              top: 0,
-              left: (_currentIndex * itemWidth) +
-                  (itemWidth / 2) -
-                  (indicatorWidth / 2),
-              child: Container(
-                width: indicatorWidth,
-                height: 3,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF5DB075),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-
-            /// Custom bottom navigation using Row instead of BottomNavigationBar
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                _buildNavItem(Icons.home, 0),
-                _buildNavItem(Icons.videocam_outlined, 1),
-                _buildNavItem(Icons.chat_bubble_outline, 2),
-                _buildNavItem(Icons.people_outline, 3),
-              ],
-            )
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Build a single navigation item
-  Widget _buildNavItem(IconData icon, int index) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        // Ensure the whole area is tappable
-        behavior: HitTestBehavior.opaque,
-        child: Center(
-          child: Icon(
-            icon,
-            size: 30,
-            color: _currentIndex == index
-                ? const Color(0xFF5DB075) // Active item color
-                : Colors.grey.shade400, // Inactive item color
-          ),
-        ),
+      bottomNavigationBar: CurvedNavigationBar(
+        items: items,
+        index: _currentIndex,
+        onTap: (index) => setState(() => _currentIndex = index),
+        height: 65.0,
+        backgroundColor: Colors.transparent,
+        buttonBackgroundColor: Colors.white,
+        color: Colors.white,
+        animationCurve: Curves.easeInOut,
+        animationDuration: const Duration(milliseconds: 400),
       ),
     );
   }

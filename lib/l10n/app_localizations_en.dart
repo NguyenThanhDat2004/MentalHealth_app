@@ -21,7 +21,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profile => 'Profile';
 
   @override
+  String get goodMorning => 'Good Morning,';
+
+  @override
+  String get goodNoon => 'Good Noon,';
+
+  @override
   String get goodAfternoon => 'Good Afternoon,';
+
+  @override
+  String get goodEvening => 'Good Evening,';
 
   @override
   String get howAreYouFeeling => 'How are you feeling today ?';

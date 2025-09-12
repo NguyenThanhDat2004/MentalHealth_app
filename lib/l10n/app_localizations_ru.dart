@@ -21,7 +21,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String get profile => 'Профиль';
 
   @override
+  String get goodMorning => 'Доброе утро,';
+
+  @override
+  String get goodNoon => 'Добрый полдень,';
+
+  @override
   String get goodAfternoon => 'Добрый день,';
+
+  @override
+  String get goodEvening => 'Добрый вечер,';
 
   @override
   String get howAreYouFeeling => 'Как вы себя чувствуете сегодня?';

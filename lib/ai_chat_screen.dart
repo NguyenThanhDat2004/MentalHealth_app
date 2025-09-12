@@ -3,8 +3,8 @@ import 'package:google_generative_ai/google_generative_ai.dart';
 import 'widgets/glass_card.dart';
 import 'widgets/liquid_background.dart';
 
-// QUAN TRỌNG: Hãy dán API Key bạn đã lấy từ Google AI Studio vào đây.
-const String _apiKey = 'AIzaSyBmzYAKh6SWVQefK5IeCCtMWESfLcUAn4Y';
+// IMPORTANT: Paste your Google AI Studio API Key here
+const String _apiKey = '';
 
 class AiChatScreen extends StatefulWidget {
   const AiChatScreen({super.key});
@@ -14,35 +14,38 @@ class AiChatScreen extends StatefulWidget {
 }
 
 class _AiChatScreenState extends State<AiChatScreen> {
-  late GenerativeModel _model;
-  late ChatSession _chat;
-  final TextEditingController _textController = TextEditingController();
-  final ScrollController _scrollController = ScrollController();
-  bool _loading = false;
-  bool _isModelInitialized = false;
+  late GenerativeModel _model; // Google Generative AI model instance
+  late ChatSession _chat; // Chat session with history
+  final TextEditingController _textController =
+      TextEditingController(); // For input field
+  final ScrollController _scrollController =
+      ScrollController(); // For auto-scroll chat
+  bool _loading = false; // Loading indicator for API calls
+  bool _isModelInitialized = false; // To check if model is ready
 
   @override
   void initState() {
     super.initState();
-    _initializeModel();
+    _initializeModel(); // Initialize AI model on screen load
   }
 
   Future<void> _initializeModel() async {
     try {
-      // Khởi tạo với mô hình mặc định hoặc kiểm tra danh sách mô hình
+      // Create a model instance (you can update to newer models)
       _model = GenerativeModel(
-        model: 'gemini-1.5-flash', // Cập nhật lên mô hình mới hơn
+        model: 'gemini-1.5-flash', // Model version
         apiKey: _apiKey,
       );
-      _chat = _model.startChat();
+      _chat = _model.startChat(); // Start new chat session
       if (mounted) {
         setState(() {
-          _isModelInitialized = true;
+          _isModelInitialized = true; // Mark initialization complete
         });
       }
     } catch (e) {
       if (mounted) {
-        _showError('Failed to initialize model: $e');
+        _showError(
+            'Failed to initialize model: $e'); // Show error if setup fails
       }
     }
   }
@@ -66,19 +69,24 @@ class _AiChatScreenState extends State<AiChatScreen> {
       ),
       body: Stack(
         children: [
+          // Animated liquid background
           const LiquidBackground(),
+
+          // Chat interface
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Column(
               children: [
+                // Chat history area
                 Expanded(
                   child: _apiKey.startsWith('YOUR_') || !_isModelInitialized
-                      ? _buildApiKeyWarning()
+                      ? _buildApiKeyWarning() // Show warning if API Key missing
                       : ListView.builder(
                           controller: _scrollController,
                           itemCount: _chat.history.length,
                           itemBuilder: (context, index) {
                             final content = _chat.history.toList()[index];
+                            // Extract text parts from history
                             final text = content.parts
                                 .whereType<TextPart>()
                                 .map<String>((e) => e.text)
@@ -90,7 +98,11 @@ class _AiChatScreenState extends State<AiChatScreen> {
                           },
                         ),
                 ),
+
+                // Show loading spinner when waiting for AI response
                 if (_loading) const CircularProgressIndicator(),
+
+                // Input field for typing messages
                 _buildTextInput(),
               ],
             ),
@@ -100,6 +112,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
     );
   }
 
+  /// Widget that shows a warning when API Key is missing
   Widget _buildApiKeyWarning() {
     return const Center(
       child: GlassCard(
@@ -115,6 +128,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
     );
   }
 
+  /// Chat input bar (text field + send button)
   Widget _buildTextInput() {
     return Padding(
       padding: const EdgeInsets.all(12.0),
@@ -124,6 +138,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 15),
         child: Row(
           children: [
+            // Text input
             Expanded(
               child: TextField(
                 controller: _textController,
@@ -134,6 +149,8 @@ class _AiChatScreenState extends State<AiChatScreen> {
                 onSubmitted: (_) => _sendMessage(),
               ),
             ),
+
+            // Send button
             IconButton(
               onPressed: !_isModelInitialized ? null : _sendMessage,
               icon: Icon(Icons.send, color: Theme.of(context).primaryColorDark),
@@ -144,9 +161,10 @@ class _AiChatScreenState extends State<AiChatScreen> {
     );
   }
 
+  /// Handle sending message to AI
   Future<void> _sendMessage() async {
     if (_textController.text.isEmpty || _loading || !_isModelInitialized) {
-      return;
+      return; // Prevent empty messages or multiple calls
     }
 
     setState(() {
@@ -154,14 +172,17 @@ class _AiChatScreenState extends State<AiChatScreen> {
     });
 
     try {
+      // Send message to AI
       final response = await _chat.sendMessage(
         Content.text(_textController.text),
       );
+
       final text = response.text;
       if (text == null) {
         _showError('No response from API.');
         return;
       }
+
       setState(() {
         _loading = false;
       });
@@ -171,11 +192,13 @@ class _AiChatScreenState extends State<AiChatScreen> {
         _loading = false;
       });
     } finally {
-      _textController.clear();
-      Future.delayed(const Duration(milliseconds: 100), _scrollDown);
+      _textController.clear(); // Clear input
+      Future.delayed(
+          const Duration(milliseconds: 100), _scrollDown); // Auto-scroll
     }
   }
 
+  /// Scroll chat to the latest message
   void _scrollDown() {
     WidgetsBinding.instance.addPostFrameCallback(
       (_) => _scrollController.animateTo(
@@ -186,6 +209,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
     );
   }
 
+  /// Show error message in a snackbar
   void _showError(String message) {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -198,6 +222,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
   }
 }
 
+/// Widget to display each chat message bubble
 class MessageWidget extends StatelessWidget {
   final String text;
   final bool isFromUser;

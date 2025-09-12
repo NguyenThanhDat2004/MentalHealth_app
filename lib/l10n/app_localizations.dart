@@ -124,11 +124,29 @@ abstract class AppLocalizations {
   /// **'Profile'**
   String get profile;
 
+  /// No description provided for @goodMorning.
+  ///
+  /// In en, this message translates to:
+  /// **'Good Morning,'**
+  String get goodMorning;
+
+  /// No description provided for @goodNoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Good Noon,'**
+  String get goodNoon;
+
   /// No description provided for @goodAfternoon.
   ///
   /// In en, this message translates to:
   /// **'Good Afternoon,'**
   String get goodAfternoon;
+
+  /// No description provided for @goodEvening.
+  ///
+  /// In en, this message translates to:
+  /// **'Good Evening,'**
+  String get goodEvening;
 
   /// No description provided for @howAreYouFeeling.
   ///

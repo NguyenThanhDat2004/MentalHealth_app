@@ -1,54 +1,44 @@
-name: mental_health_app
-description: A new Flutter project.
+name: mental_health_app          # The name of your Flutter project
+description: A new Flutter project.   # Short description of the app
 
-publish_to: 'none' 
-# Prevents publishing to pub.dev (useful for private/local projects)
+publish_to: 'none'               # Prevents publishing to pub.dev (keep private)
 
-version: 1.0.0+1
-# Versioning format: major.minor.patch+build
+version: 1.0.0+1                 # Version: 1.0.0 (build number 1)
 
 environment:
-  sdk: '>=3.0.0 <4.0.0'
-  # Dart SDK constraints (requires Dart 3.x)
+  sdk: '>=3.0.0 <4.0.0'           # Dart SDK version constraints (requires Dart 3.x)
 
 dependencies:
   flutter:
-    sdk: flutter
-    # The core Flutter SDK
-
+    sdk: flutter                 # Core Flutter SDK dependency
+  
   flutter_localizations:
-    sdk: flutter
-    # Provides localization (multi-language) support
+    sdk: flutter                 # Provides localization support (for multi-language apps)
+  
+  intl: ^0.20.2                  # Internationalization/Localization utilities
 
-  intl: ^0.20.2
-    # Internationalization and formatting (dates, numbers, messages)
-
-  google_generative_ai: ^0.3.0
-    # Google Generative AI package (used for AI/LLM integration)
-
-  flutter_staggered_animations: ^1.1.1
-    # Provides staggered animations for lists and grids
-
-  cupertino_icons: ^1.0.2
-    # iOS-style icons (default Flutter package)
+  curved_navigation_bar: ^1.0.3  # Package for creating curved bottom navigation bars
+  google_generative_ai: ^0.2.2   # Google Generative AI package (Gemini API integration)
+  flutter_staggered_animations: ^1.1.1 # Animations for lists/grids
+  image_picker: ^1.0.7           # Pick images from gallery or camera
+  cupertino_icons: ^1.0.2        # iOS-style icons (used in Flutter apps)
 
 dev_dependencies:
   flutter_test:
-    sdk: flutter
-    # Testing framework for Flutter apps
-
-  flutter_lints: ^2.0.0
-    # Official Flutter lint rules (helps enforce clean code style)
+    sdk: flutter                 # Testing framework for Flutter
+  
+  flutter_lints: ^2.0.0          # Recommended lint rules (static code analysis)
 
 flutter:
-  generate: true
-  uses-material-design: true
-  # Enables Material Design icons and widgets
+  generate: true                 # Enable code generation (for localization)
+  uses-material-design: true     # Use Material Design icons by default
+
+  assets:
+    - assets/images/bot.png      # Asset: chatbot image
 
   fonts:
-    - family: Urbanist
+    - family: Urbanist           # Custom font family name
       fonts:
-        - asset: assets/fonts/Urbanist-Regular.ttf
-        - asset: assets/fonts/Urbanist-Bold.ttf
-          weight: 700
-    # Custom font family (Urbanist) with regular and bold variants
+        - asset: assets/fonts/Urbanist-Regular.ttf   # Regular font
+        - asset: assets/fonts/Urbanist-Bold.ttf      # Bold font
+          weight: 700            # Set bold font weight

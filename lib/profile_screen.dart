@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'l10n/app_localizations.dart';
+import 'package:image_picker/image_picker.dart';
 import 'main.dart';
 import 'widgets/liquid_background.dart';
 import 'widgets/glass_card.dart';
@@ -7,11 +9,15 @@ import 'widgets/glass_card.dart';
 class ProfileScreen extends StatefulWidget {
   final String initialName;
   final Function(String) onNameUpdated;
+  final String? initialAvatarPath;
+  final Function(String) onAvatarUpdated;
 
   const ProfileScreen({
     super.key,
     required this.initialName,
     required this.onNameUpdated,
+    this.initialAvatarPath,
+    required this.onAvatarUpdated,
   });
 
   @override
@@ -55,7 +61,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     'Scientific Research'
   ];
 
-  // Animation Controller cho hiệu ứng nền lỏng
+  String? _currentAvatarPath;
   late AnimationController _animationController;
 
   @override
@@ -64,8 +70,8 @@ class _ProfileScreenState extends State<ProfileScreen>
     _nameController = TextEditingController(text: widget.initialName);
     _phoneController = TextEditingController(text: '+98 1245560090');
     _emailController = TextEditingController(text: 'amyyoung@random.com');
+    _currentAvatarPath = widget.initialAvatarPath;
 
-    // Cấu hình animation
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 15),
@@ -77,12 +83,100 @@ class _ProfileScreenState extends State<ProfileScreen>
     _nameController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
-    _animationController.dispose(); // Hủy animation controller
+    _animationController.dispose();
     super.dispose();
+  }
+
+  Future<void> _showAvatarChangeOptions() async {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return GlassCard(
+          margin: const EdgeInsets.all(10),
+          child: Wrap(
+            children: <Widget>[
+              ListTile(
+                leading:
+                    const Icon(Icons.photo_library, color: Color(0xFF5DB075)),
+                title: const Text('Choose from Gallery'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _pickImageFromGallery();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.link, color: Color(0xFF5DB075)),
+                title: const Text('Use Image URL'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _showImageUrlDialog();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _pickImageFromGallery() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() {
+        _currentAvatarPath = image.path;
+      });
+    }
+  }
+
+  Future<void> _showImageUrlDialog() async {
+    final TextEditingController urlController = TextEditingController();
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xffeaf2f2),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('Enter Image URL'),
+          content: TextField(
+            controller: urlController,
+            decoration: const InputDecoration(hintText: "https://..."),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('OK',
+                  style: TextStyle(
+                      color: Color(0xFF5DB075), fontWeight: FontWeight.bold)),
+              onPressed: () {
+                if (urlController.text.isNotEmpty &&
+                    (urlController.text.startsWith('http://') ||
+                        urlController.text.startsWith('https://'))) {
+                  setState(() {
+                    _currentAvatarPath = urlController.text;
+                  });
+                }
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _saveProfile() {
     widget.onNameUpdated(_nameController.text);
+    if (_currentAvatarPath != null) {
+      widget.onAvatarUpdated(_currentAvatarPath!);
+    }
     setState(() {
       _isEditing = false;
     });
@@ -97,17 +191,15 @@ class _ProfileScreenState extends State<ProfileScreen>
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
-
     return Scaffold(
-      backgroundColor: Colors
-          .transparent, // Nền trong suốt để thấy background của MainScreen
+      backgroundColor: Colors.transparent,
       extendBodyBehindAppBar: true,
       appBar: _buildAppBar(localizations),
       body: Stack(
         children: [
           const LiquidBackground(),
           ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 30),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             children: [
               const SizedBox(height: 120),
               GlassCard(
@@ -135,7 +227,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                           ? _buildEditForm(localizations)
                           : _buildInfoDisplay(localizations),
                     ),
-                    const SizedBox(height: 0),
+                    const SizedBox(height: 20),
                     _buildLanguageSelector(localizations),
                   ],
                 ),
@@ -197,12 +289,24 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 
   Widget _buildAvatar() {
+    ImageProvider avatarImage;
+    if (_currentAvatarPath != null) {
+      if (_currentAvatarPath!.startsWith('http')) {
+        avatarImage = NetworkImage(_currentAvatarPath!);
+      } else {
+        avatarImage = FileImage(File(_currentAvatarPath!));
+      }
+    } else {
+      avatarImage = const NetworkImage(
+          'https://eric.edu.vn/public/upload/2024/12/anh-gai-xinh-lop-10-09.webp');
+    }
+
     return Center(
       child: Stack(
         children: [
-          const CircleAvatar(
+          CircleAvatar(
             radius: 60,
-            backgroundImage: NetworkImage('https://i.pravatar.cc/300?img=12'),
+            backgroundImage: avatarImage,
             backgroundColor: Colors.white,
           ),
           AnimatedOpacity(
@@ -212,16 +316,19 @@ class _ProfileScreenState extends State<ProfileScreen>
                 ? Positioned(
                     bottom: 0,
                     right: 0,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF5DB075),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
-                      child: const Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: Icon(Icons.camera_alt,
-                            color: Colors.white, size: 20),
+                    child: GestureDetector(
+                      onTap: _showAvatarChangeOptions,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF5DB075),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: const Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Icon(Icons.camera_alt,
+                              color: Colors.white, size: 20),
+                        ),
                       ),
                     ),
                   )
@@ -345,8 +452,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       decoration: InputDecoration(
         labelText: label,
         filled: true,
-        // Đã sửa lỗi
-        fillColor: Colors.white.withAlpha(128), // 0.5 opacity
+        fillColor: Colors.white.withAlpha(128),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
           borderSide: BorderSide.none,
@@ -357,35 +463,37 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
+  // ĐÃ SỬA: Bọc DropdownButtonFormField trong Material
   Widget _buildDropdownField({required String label}) {
-    return DropdownButtonFormField<String>(
-      value: _selectedDepartment,
-      decoration: InputDecoration(
-        labelText: label,
-        filled: true,
-        // Đã sửa lỗi
-        fillColor: Colors.white.withAlpha(128), // 0.5 opacity
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide.none,
+    return Material(
+      color: Colors.transparent,
+      child: DropdownButtonFormField<String>(
+        value: _selectedDepartment,
+        decoration: InputDecoration(
+          labelText: label,
+          filled: true,
+          fillColor: Colors.white.withAlpha(128),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide.none,
+          ),
         ),
+        items: _departments.map((String value) {
+          return DropdownMenuItem<String>(
+            value: value,
+            child: Text(value),
+          );
+        }).toList(),
+        onChanged: (newValue) {
+          setState(() {
+            _selectedDepartment = newValue!;
+          });
+        },
       ),
-      items: _departments.map((String value) {
-        return DropdownMenuItem<String>(
-          value: value,
-          child: Text(value),
-        );
-      }).toList(),
-      onChanged: (newValue) {
-        setState(() {
-          _selectedDepartment = newValue!;
-        });
-      },
     );
   }
 }
 
-// Class để tạo hình dạng cong cho background
 class BackgroundClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {

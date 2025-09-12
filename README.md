@@ -1,44 +1,66 @@
-Giao diện Ứng dụng Sức khỏe Tinh thần bằng Flutter
-Đây là một dự án Flutter mô phỏng lại giao diện người dùng (UI) cho một ứng dụng về sức khỏe tinh thần và ευεξία, dựa trên các thiết kế được cung cấp. Ứng dụng bao gồm nhiều màn hình được kết nối với nhau thông qua một thanh điều hướng chính.
-✨ Tính năng
-Điều hướng đa màn hình: Sử dụng BottomNavigationBar để chuyển đổi mượt mà giữa các màn hình chính.
-Màn hình Home linh hoạt: Giao diện có thể thay đổi tùy theo trạng thái của người dùng (ví dụ: gói dịch vụ còn hạn hoặc đã hết hạn).
-Màn hình Sessions: Liệt kê các buổi trị liệu sắp tới và đã hoàn thành với các hành động tương ứng.
-Màn hình Community: Một không gian cộng đồng với các bài đăng, bộ lọc theo chủ đề và các tương tác xã hội.
-Thiết kế đồng bộ: Toàn bộ ứng dụng sử dụng một tông màu xanh lá cây nhất quán, tạo cảm giác thư giãn và chuyên nghiệp.
-📸 Ảnh chụp màn hình
-<table>
-<tr>
-<td><img src="https://www.google.com/search?q=https://i.imgur.com/your-home-screen-image.png" alt="Màn hình Home" width="200"/></td>
-<td><img src="https://www.google.com/search?q=https://i.imgur.com/your-sessions-screen-image.png" alt="Màn hình Sessions" width="200"/></td>
-<td><img src="https://www.google.com/search?q=https://i.imgur.com/your-community-screen-image.png" alt="Màn hình Community" width="200"/></td>
-</tr>
-<tr>
-<td align="center">Màn hình Home</td>
-<td align="center">Màn hình Sessions</td>
-<td align="center">Màn hình Community</td>
-</tr>
-</table>
-(Lưu ý: Bạn cần thay thế các đường link ảnh chụp màn hình ở trên bằng ảnh thực tế của ứng dụng.)
-🚀 Bắt đầu
+Ứng dụng Sức khỏe Tinh thần - Flutter UI
+Đây là một dự án Flutter mô phỏng và xây dựng một ứng dụng hoàn chỉnh về sức khỏe tinh thần và ευεξία. Dự án không chỉ dừng lại ở việc tái tạo giao diện mà còn tích hợp các tính năng cao cấp như trợ lý AI, quản lý trạng thái thông minh, và hỗ trợ đa ngôn ngữ.
+
+Các Tính năng Nổi bật
+Ứng dụng được trang bị nhiều tính năng hiện đại để mang lại trải nghiệm người dùng cao cấp:
+
+Giao diện "Liquid Glass": Toàn bộ ứng dụng sử dụng phong cách thiết kế kính mờ (Glassmorphism) kết hợp với các khối màu "lỏng" chuyển động mượt mà ở phía sau, tạo ra một giao diện sang trọng và thư giãn.
+
+Trợ lý AI (AI Companion): Tích hợp trực tiếp với Google Gemini API, cho phép người dùng trò chuyện và nhận được sự hỗ trợ tức thì từ AI, mô phỏng một người bạn đồng hành.
+
+Hỗ trợ đa ngôn ngữ (i18n): Ứng dụng được cấu hình hoàn chỉnh để hỗ trợ 3 ngôn ngữ: Tiếng Anh, Tiếng Việt, và Tiếng Nga. Người dùng có thể chuyển đổi ngôn ngữ bất kỳ lúc nào trong màn hình Profile.
+
+Cập nhật theo thời gian thực: Màn hình chính tự động cập nhật ngày, giờ và lời chào (Sáng, Trưa, Chiều, Tối) mỗi giây.
+
+Đồng bộ hóa trạng thái: Tên và ảnh đại diện của người dùng được cập nhật tự động trên tất cả các màn hình sau khi họ chỉnh sửa trong Profile.
+
+Hiệu ứng chuyển động mượt mà: Tất cả các tương tác, từ chuyển đổi màn hình đến hiển thị danh sách, đều được trang bị các hiệu ứng animation tinh tế.
+Thanh điều hướng cong (Curved Navigation Bar): Sử dụng một thanh điều hướng cong độc đáo với hiệu ứng chuyển động mượt mà.
+
+Bắt đầu
 Để chạy dự án này trên máy của bạn, hãy làm theo các bước sau:
+
 Yêu cầu
 Đã cài đặt Flutter SDK (phiên bản 3.0 trở lên).
+
 Một trình soạn thảo code như VS Code hoặc Android Studio.
+
 Một thiết bị Android/iOS hoặc máy ảo đã được cấu hình.
+
 Cài đặt
 Clone a repository này:
-git clone [https://your-repository-url.git](https://github.com/NguyenThanhDat2004/Mentalheath_app.git)
-cd mental-health-app
+
+git clone [https://github.com/NguyenThanhDat2004/MentalHealth_app.git](https://github.com/NguyenThanhDat2004/MentalHealth_app.git)
+cd MentalHealth_app
+
 Cài đặt các gói phụ thuộc:
+Mở terminal trong thư mục gốc của dự án và chạy lệnh:
+
 flutter pub get
+
+Lệnh này sẽ tự động tải về tất cả các gói cần thiết và tạo ra các tệp dịch tự động.
+
+Cấu hình API Key (Quan trọng):
+
+Truy cập Google AI Studio để lấy API Key cho Gemini.
+
+Mở tệp lib/ai_chat_screen.dart.
+
+Tìm đến dòng const String _apiKey = 'YOUR_GOOGLE_API_KEY'; và thay thế 'YOUR_GOOGLE_API_KEY' bằng chuỗi key bạn đã lấy.
+
 Chạy ứng dụng:
+
 flutter run
-📂 Cấu trúc dự án
-Dự án được tổ chức một cách đơn giản để dễ dàng bảo trì và mở rộng:
+
+Cấu trúc dự án
+Dự án được tổ chức một cách rõ ràng để dễ dàng bảo trì và mở rộng:
+
 lib/
-├── main.dart             # Điểm vào chính của ứng dụng, quản lý điều hướng
-├── home_screen.dart      # Widget cho màn hình Home (tách ra từ main)
-├── sessions_screen.dart  # Widget cho màn hình Sessions
-└── community_screen.dart # Widget cho màn hình Community
-# Mentalheath_app
+├── l10n/                 # Chứa các tệp dịch (.arb)
+├── widgets/              # Chứa các widget có thể tái sử dụng (LiquidBackground, GlassCard)
+├── ai_chat_screen.dart   # Màn hình trò chuyện với AI
+├── community_screen.dart # Màn hình Cộng đồng
+├── home_screen.dart      # Màn hình chính
+├── main.dart             # Điểm vào chính, quản lý điều hướng và trạng thái chung
+├── profile_screen.dart   # Màn hình Hồ sơ người dùng
+└── sessions_screen.dart  # Màn hình các buổi học

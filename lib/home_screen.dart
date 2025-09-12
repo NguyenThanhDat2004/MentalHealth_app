@@ -1,27 +1,96 @@
+import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'l10n/app_localizations.dart';
+import 'package:intl/intl.dart';
 import 'widgets/liquid_background.dart';
 import 'widgets/glass_card.dart';
 
-/// HomeScreen displays the main dashboard UI for the user.
+/// HomeScreen displays greeting, mood selection,
+/// session info, quotes, and quick actions.
 class HomeScreen extends StatefulWidget {
-  final String userName; // Username passed from parent widget
-  const HomeScreen({super.key, required this.userName});
+  final String userName;
+  final String? avatarPath;
+
+  const HomeScreen({super.key, required this.userName, this.avatarPath});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // Flag to simulate whether the subscription/plan is expired
+  // Flag to simulate whether the user’s plan is expired
   final bool _isPlanExpired = false;
+
+  // Timer for updating clock
+  late Timer _timer;
+
+  // Current time, date, and greeting string
+  String _currentTime = '';
+  String _currentDate = '';
+  String _greeting = '';
+
+  @override
+  void initState() {
+    super.initState();
+    // Start a timer that updates every second
+    _timer =
+        Timer.periodic(const Duration(seconds: 1), (Timer t) => _updateTime());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Update time immediately after widget is built
+    _updateTime();
+  }
+
+  @override
+  void dispose() {
+    // Cancel timer to prevent memory leaks
+    _timer.cancel();
+    super.dispose();
+  }
+
+  /// Updates time, date, and greeting message based on current hour
+  void _updateTime() {
+    if (!mounted) return;
+    final now = DateTime.now();
+    final localizations = AppLocalizations.of(context);
+
+    if (localizations != null) {
+      final String formattedTime =
+          DateFormat('hh:mm:ss a', localizations.localeName).format(now);
+      final String formattedDate =
+          DateFormat.yMMMMEEEEd(localizations.localeName).format(now);
+
+      // Choose greeting based on time of day
+      final hour = now.hour;
+      String newGreeting;
+      if (hour >= 5 && hour < 12) {
+        newGreeting = localizations.goodMorning;
+      } else if (hour >= 12 && hour < 14) {
+        newGreeting = localizations.goodNoon;
+      } else if (hour >= 14 && hour < 18) {
+        newGreeting = localizations.goodAfternoon;
+      } else {
+        newGreeting = localizations.goodEvening;
+      }
+
+      setState(() {
+        _currentTime = formattedTime;
+        _currentDate = formattedDate;
+        _greeting = newGreeting;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
 
-    // Build a list of widgets that compose the home screen content
+    // Build UI components dynamically based on plan status
     List<Widget> children = [
       _isPlanExpired
           ? _buildSimpleHeader()
@@ -29,7 +98,7 @@ class _HomeScreenState extends State<HomeScreen> {
       const SizedBox(height: 25),
       if (!_isPlanExpired)
         GlassCard(
-          margin: const EdgeInsets.symmetric(vertical: 0),
+          margin: EdgeInsets.zero,
           child: Text(
             localizations.howAreYouFeeling,
             style: const TextStyle(
@@ -53,7 +122,7 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         const LiquidBackground(), // Animated liquid background
         AnimationLimiter(
-          // Animate each child in the list view
+          // Animate list items with staggered effect
           child: ListView.builder(
             padding: const EdgeInsets.all(20.0),
             itemCount: children.length,
@@ -63,9 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 duration: const Duration(milliseconds: 375),
                 child: SlideAnimation(
                   verticalOffset: 50.0,
-                  child: FadeInAnimation(
-                    child: children[index],
-                  ),
+                  child: FadeInAnimation(child: children[index]),
                 ),
               );
             },
@@ -75,21 +142,34 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// Header with greeting, avatar, and notification icon
+  /// Greeting header with avatar, notifications, date & time
   Widget _buildGreetingHeader(AppLocalizations localizations) {
+    // Use custom avatar if provided, otherwise default network image
+    final ImageProvider avatarImage = widget.avatarPath != null
+        ? (widget.avatarPath!.startsWith('http')
+            ? NetworkImage(widget.avatarPath!)
+            : FileImage(File(widget.avatarPath!))) as ImageProvider
+        : const NetworkImage('https://i.pravatar.cc/150?img=32');
+
     return GlassCard(
       margin: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Top row with avatar + notifications
+          // Date & time with notification icon
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const CircleAvatar(
-                radius: 25,
-                backgroundImage:
-                    NetworkImage('https://i.pravatar.cc/150?img=32'),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(_currentDate,
+                      style:
+                          TextStyle(fontSize: 14, color: Colors.grey.shade700)),
+                  Text(_currentTime,
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold)),
+                ],
               ),
               Stack(
                 alignment: Alignment.topRight,
@@ -108,32 +188,25 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           const SizedBox(height: 20),
-          // Greeting texts
-          Text(
-            localizations.goodAfternoon,
-            style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF333333)),
-          ),
-          Text(
-            localizations.userName(widget.userName),
-            style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF333333)),
-          ),
+          CircleAvatar(radius: 25, backgroundImage: avatarImage),
+          const SizedBox(height: 10),
+          Text(_greeting,
+              style:
+                  const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+          Text(localizations.userName(widget.userName),
+              style:
+                  const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
         ],
       ),
     );
   }
 
-  /// Session booking card with description and button
+  /// Session advertisement card
   Widget _buildSessionCard() {
-    return Row(
+    return const Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Column(
+        Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('1 on 1 Sessions',
@@ -155,9 +228,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-        // Icon aligned to the right
-        Icon(Icons.people_alt,
-            size: 50, color: const Color(0xFFF2994A).withAlpha(204)),
+        Icon(Icons.people_alt, size: 50, color: Color(0xFFF2994A)),
       ],
     );
   }
@@ -184,7 +255,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// Simpler header when plan is expired
+  /// Simple header for expired plan (minimal info)
   Widget _buildSimpleHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -200,17 +271,12 @@ class _HomeScreenState extends State<HomeScreen> {
             Container(
               padding: const EdgeInsets.all(5),
               decoration: BoxDecoration(
-                color: Colors.red.shade400,
-                shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFFF9F9F9), width: 2),
-              ),
-              child: const Text(
-                '3',
-                style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold),
-              ),
+                  color: Colors.red.shade400, shape: BoxShape.circle),
+              child: const Text('3',
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -218,7 +284,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// Mood selection with icons (used when plan expired)
+  /// Mood selection with icons (when plan is expired)
   Widget _buildIconMoodSelection() {
     return const Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -246,7 +312,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// Mood selection with emojis (default)
+  /// Mood selection with emojis (default mode)
   Widget _buildEmojiMoodSelection() {
     return const Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -261,7 +327,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// Action buttons row (Journal, Library)
+  /// Quick action buttons (Journal & Library)
   Widget _buildActionButtons() {
     return Row(
       children: [
@@ -272,7 +338,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// Single action button builder
+  /// Helper method to build an action button
   Widget _actionButton(IconData icon, String label) {
     return ElevatedButton.icon(
       onPressed: () {},
@@ -289,18 +355,19 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-/// Emoji-based mood widget (used when plan is active)
+/// Emoji mood selection widget
 class _EmojiMoodWidget extends StatelessWidget {
   final String emoji;
   final String text;
   final Color color;
   final bool isPartial;
 
-  const _EmojiMoodWidget(
-      {required this.emoji,
-      required this.text,
-      required this.color,
-      this.isPartial = false});
+  const _EmojiMoodWidget({
+    required this.emoji,
+    required this.text,
+    required this.color,
+    this.isPartial = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -316,7 +383,7 @@ class _EmojiMoodWidget extends StatelessWidget {
         ],
       ),
     );
-    // Show only half if isPartial is true
+    // If partial, show only half of the widget
     if (isPartial) {
       return ClipRect(
           child: Align(
@@ -328,18 +395,19 @@ class _EmojiMoodWidget extends StatelessWidget {
   }
 }
 
-/// Icon-based mood widget (used when plan is expired)
+/// Icon mood selection widget
 class _IconMoodWidget extends StatelessWidget {
   final IconData icon;
   final String text;
   final Color color;
   final bool isPartial;
 
-  const _IconMoodWidget(
-      {required this.icon,
-      required this.text,
-      required this.color,
-      this.isPartial = false});
+  const _IconMoodWidget({
+    required this.icon,
+    required this.text,
+    required this.color,
+    this.isPartial = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -359,7 +427,7 @@ class _IconMoodWidget extends StatelessWidget {
                 fontWeight: FontWeight.w600, color: Colors.grey)),
       ],
     );
-    // Show only half if isPartial is true
+    // If partial, show only half of the widget
     if (isPartial) {
       return ClipRect(
           child: Align(
