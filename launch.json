@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Flutter with Gemini AI",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": [
+        "--dart-define=GEMINI_API_KEY=AIzaSyCcudhaJxV2IcW5dis-AEJxn5ybRni7z7I"
+      ]
+    }
+  ]
+}
