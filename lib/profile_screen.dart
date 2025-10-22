@@ -228,7 +228,8 @@ class _ProfileScreenState extends State<ProfileScreen>
                           : _buildInfoDisplay(localizations),
                     ),
                     const SizedBox(height: 20),
-                    _buildLanguageSelector(localizations),
+                    // Chỉ hiển thị bộ chọn ngôn ngữ khi ở chế độ XEM
+                    if (!_isEditing) _buildLanguageSelector(localizations),
                   ],
                 ),
               ),
@@ -297,8 +298,7 @@ class _ProfileScreenState extends State<ProfileScreen>
         avatarImage = FileImage(File(_currentAvatarPath!));
       }
     } else {
-      avatarImage = const NetworkImage(
-          'https://eric.edu.vn/public/upload/2024/12/anh-gai-xinh-lop-10-09.webp');
+      avatarImage = const NetworkImage('https://i.pravatar.cc/300?img=12');
     }
 
     return Center(
@@ -380,6 +380,21 @@ class _ProfileScreenState extends State<ProfileScreen>
         const SizedBox(height: 20),
         _buildTextField(
             label: localizations.email, controller: _emailController),
+        const SizedBox(height: 30),
+        ElevatedButton(
+          onPressed: _saveProfile,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF5DB075),
+            minimumSize: const Size(double.infinity, 50),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+          ),
+          child: Text(
+            localizations.save,
+            style: const TextStyle(fontSize: 18, color: Colors.white),
+          ),
+        ),
       ],
     );
   }
@@ -463,12 +478,12 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
-  // ĐÃ SỬA: Bọc DropdownButtonFormField trong Material
   Widget _buildDropdownField({required String label}) {
     return Material(
       color: Colors.transparent,
       child: DropdownButtonFormField<String>(
-        initialValue: "Some initial text",
+        // ĐÃ SỬA: Thay thế `value` bằng `initialValue`
+        initialValue: _selectedDepartment,
         decoration: InputDecoration(
           labelText: label,
           filled: true,
