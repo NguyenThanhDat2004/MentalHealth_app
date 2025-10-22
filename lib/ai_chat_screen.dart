@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'widgets/glass_card.dart';
 import 'widgets/liquid_background.dart';
 
-// TEMPORARY WORKAROUND: Hardcode API key for testing
+// Hardcode API key for testing
 // Delete after testing!
 const String _apiKey = String.fromEnvironment(
   'GEMINI_API_KEY',
