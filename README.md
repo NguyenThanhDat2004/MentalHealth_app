@@ -1,67 +1,176 @@
-Ứng dụng Sức khỏe Tinh thần - Flutter UI
-Đây là một dự án Flutter mô phỏng và xây dựng một ứng dụng hoàn chỉnh về sức khỏe tinh thần và ευεξία. Dự án không chỉ dừng lại ở việc tái tạo giao diện mà còn tích hợp các tính năng cao cấp như trợ lý AI, quản lý trạng thái thông minh, và hỗ trợ đa ngôn ngữ.
+# 🌿 Mental Health App – Flutter Wellness Companion
 
-Các Tính năng Nổi bật
-Ứng dụng được trang bị nhiều tính năng hiện đại để mang lại trải nghiệm người dùng cao cấp:
+<p align="center">
+  <strong>A modern cross-platform Flutter app designed to improve mental wellness through self-awareness, guided sessions, and community support.</strong>
+</p>
 
-Giao diện "Liquid Glass": Toàn bộ ứng dụng sử dụng phong cách thiết kế kính mờ (Glassmorphism) kết hợp với các khối màu "lỏng" chuyển động mượt mà ở phía sau, tạo ra một giao diện sang trọng và thư giãn.
+---
 
-Trợ lý AI (AI Companion): Tích hợp trực tiếp với Google Gemini API, cho phép người dùng trò chuyện và nhận được sự hỗ trợ tức thì từ AI, mô phỏng một người bạn đồng hành.
+## 🧘 Overview
 
-Hỗ trợ đa ngôn ngữ (i18n): Ứng dụng được cấu hình hoàn chỉnh để hỗ trợ 3 ngôn ngữ: Tiếng Anh, Tiếng Việt, và Tiếng Nga. Người dùng có thể chuyển đổi ngôn ngữ bất kỳ lúc nào trong màn hình Profile.
+**Mental Health App** is a multi-language mobile application built with **Flutter** that helps users monitor their mental wellbeing, connect with supportive communities, and track personal growth.
 
-Cập nhật theo thời gian thực: Màn hình chính tự động cập nhật ngày, giờ và lời chào (Sáng, Trưa, Chiều, Tối) mỗi giây.
+The app provides a **minimalist UI**, **smooth transitions**, and a **curved bottom navigation bar**, creating a calm and pleasant user experience.
 
-Đồng bộ hóa trạng thái: Tên và ảnh đại diện của người dùng được cập nhật tự động trên tất cả các màn hình sau khi họ chỉnh sửa trong Profile.
+---
 
-Hiệu ứng chuyển động mượt mà: Tất cả các tương tác, từ chuyển đổi màn hình đến hiển thị danh sách, đều được trang bị các hiệu ứng animation tinh tế.
-Thanh điều hướng cong (Curved Navigation Bar): Sử dụng một thanh điều hướng cong độc đáo với hiệu ứng chuyển động mượt mà.
-<img width="1290" height="2796" alt="image" src="https://github.com/user-attachments/assets/8aedbdc8-8aa2-49bf-b08c-93e8b15a7905" />
+## ✨ Key Features
 
-Bắt đầu
-Để chạy dự án này trên máy của bạn, hãy làm theo các bước sau:
+### 🏠 Home Screen
 
-Yêu cầu
-Đã cài đặt Flutter SDK (phiên bản 3.0 trở lên).
+- Personalized dashboard with username and avatar.
+- Motivational quotes and mental wellness reminders.
 
-Một trình soạn thảo code như VS Code hoặc Android Studio.
+### 💬 Community
 
-Một thiết bị Android/iOS hoặc máy ảo đã được cấu hình.
+- Join meaningful discussions about mental health.
+- Connect with others for emotional support.
 
-Cài đặt
-Clone a repository này:
+### 📅 Sessions
 
-git clone [https://github.com/NguyenThanhDat2004/MentalHealth_app.git](https://github.com/NguyenThanhDat2004/MentalHealth_app.git)
-cd MentalHealth_app
+- Log or track therapy and meditation sessions.
+- Monitor session summaries and progress over time.
 
-Cài đặt các gói phụ thuộc:
-Mở terminal trong thư mục gốc của dự án và chạy lệnh:
+### 👤 Profile
 
+- Edit your name and profile picture in real-time.
+- Updates reflect instantly across all pages.
+
+---
+
+## 🌍 Localization
+
+This app supports **three languages**:
+
+- 🇺🇸 English (`en`)
+- 🇻🇳 Vietnamese (`vi`)
+- 🇷🇺 Russian (`ru`)
+
+You can switch languages dynamically using:
+
+```dart
+MentalHealthApp.setLocale(context, Locale('vi'));
+```
+
+---
+
+## 🧩 Architecture & Tech Stack
+
+| Component                | Description                                 |
+| ------------------------ | ------------------------------------------- |
+| **Framework**            | Flutter (Material Design 3)                 |
+| **Language**             | Dart                                        |
+| **Architecture Pattern** | MVVM-like Stateful Widgets                  |
+| **Navigation**           | `curved_navigation_bar`                     |
+| **Localization**         | `flutter_localizations`, `AppLocalizations` |
+| **Animation**            | `AnimatedSwitcher` + `FadeTransition`       |
+| **UI Theme**             | Urbanist font, soft green palette           |
+| **Platforms**            | Android & iOS                               |
+
+---
+
+## ⚙️ Project Structure
+
+```
+lib/
+│
+├── main.dart                 # Entry point of the app
+├── home_screen.dart          # Home dashboard
+├── sessions_screen.dart      # Meditation & therapy tracking
+├── community_screen.dart     # Community chat section
+├── profile_screen.dart       # User profile page
+└── l10n/
+    └── app_localizations.dart # Handles multilingual support
+```
+
+---
+
+## 🎨 UI & Navigation
+
+The app uses **CurvedNavigationBar** for smooth and natural navigation between core sections:
+
+| Icon | Page            | Description          |
+| ---- | --------------- | -------------------- |
+| 🏠   | HomeScreen      | Overview and welcome |
+| 🎥   | SessionsScreen  | Therapy & meditation |
+| 💬   | CommunityScreen | Chat and community   |
+| 👤   | ProfileScreen   | Manage profile info  |
+
+---
+
+## 🛠️ Installation & Run
+
+### Prerequisites
+
+- Flutter SDK ≥ 3.0.0
+- Android Studio or VS Code
+- Android Emulator or iOS Simulator
+
+### Setup Steps
+
+1️⃣ **Clone the Repository**
+
+```bash
+git clone https://github.com/yourusername/mental_health_app.git
+cd mental_health_app
+```
+
+2️⃣ **Install Dependencies**
+
+```bash
 flutter pub get
+```
 
-Lệnh này sẽ tự động tải về tất cả các gói cần thiết và tạo ra các tệp dịch tự động.
+3️⃣ **Run the App**
 
-Cấu hình API Key (Quan trọng):
-
-Truy cập Google AI Studio để lấy API Key cho Gemini.
-
-Mở tệp lib/ai_chat_screen.dart.
-
-Tìm đến dòng const String _apiKey = 'YOUR_GOOGLE_API_KEY'; và thay thế 'YOUR_GOOGLE_API_KEY' bằng chuỗi key bạn đã lấy.
-
-Chạy ứng dụng:
-
+```bash
 flutter run
+```
 
-Cấu trúc dự án
-Dự án được tổ chức một cách rõ ràng để dễ dàng bảo trì và mở rộng:
+4️⃣ **Build for Release**
 
-lib
-  l10n                   # Chứa các tệp dịch (.arb)
-  widgets                # Chứa các widget có thể tái sử dụng (LiquidBackground, GlassCard)
-  ai_chat_screen.dart   # Màn hình trò chuyện với AI
-  community_screen.dart # Màn hình Cộng đồng
-  home_screen.dart      # Màn hình chính
-  main.dart             # Điểm vào chính, quản lý điều hướng và trạng thái chung
-  profile_screen.dart   # Màn hình Hồ sơ người dùng
-  sessions_screen.dart  # Màn hình các buổi học
+```bash
+flutter build apk --release
+```
+
+---
+
+## 📱 Screenshots
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/2d0cdbce-2d91-4149-846d-e2b0d643db79" width="220" />
+  <img src="https://github.com/user-attachments/assets/502c7aff-5e54-4ff4-b5c9-e74cde4871cc" width="220" />
+  <img src="https://github.com/user-attachments/assets/4579506e-f408-4988-8e7b-200f7799a8cb" width="220" />
+</p>
+
+---
+
+## 💡 Future Improvements
+
+- [ ] Add dark mode 🌙
+- [ ] Integrate Firebase Authentication 🔥
+- [ ] Add mood tracking & journaling 📓
+- [ ] AI-powered mood suggestions 🤖
+- [ ] Push notifications for daily check-ins 🔔
+
+---
+
+## 🧠 Developer Skills
+
+<p align="left">
+  <img src="https://skillicons.dev/icons?i=dart,flutter,java,kotlin,swift" alt="Mobile" />
+  <img src="https://skillicons.dev/icons?i=git,github,vscode,androidstudio,postman,figma" alt="Tools" />
+</p>
+
+---
+
+## 📜 License
+
+This project is licensed under the **MIT License**.
+See the `LICENSE` file for details.
+
+---
+
+<p align="center">
+  ⭐ If you find this project helpful, please give it a <b>Star</b> on GitHub to support development! ⭐
+</p>
