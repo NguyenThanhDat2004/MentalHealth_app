@@ -8,7 +8,7 @@ import 'widgets/liquid_background.dart';
 // Delete after testing!
 const String _apiKey = String.fromEnvironment(
   'GEMINI_API_KEY',
-  defaultValue: 'AIzaSyCcudhaJxV2IcW5dis-AEJxn5ybRni7z7I', // Key Api of your
+  defaultValue: 'AIzaSyCcudhaJxV2IcW5dis-AEJxn5ybRni7z7I', // ← Key của bạn
 );
 
 class AiChatScreen extends StatefulWidget {
@@ -51,7 +51,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
   }
 
   Future<void> _initialize() async {
-    // Debug: Check API key
+    // Debug: Kiểm tra API key
     debugPrint(
         '🔑 API Key: ${_apiKey.substring(0, 20)}... (length: ${_apiKey.length})');
 
@@ -75,7 +75,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
         );
 
         if (response != null && response.isNotEmpty) {
-          debugPrint('SUCCESS with ${modelConfig['name']}');
+          debugPrint('✅ SUCCESS with ${modelConfig['name']}');
           setState(() {
             _workingModel = modelConfig['name'];
             _workingApiVersion = modelConfig['apiVersion'];
@@ -264,49 +264,66 @@ class _AiChatScreenState extends State<AiChatScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                Icon(
+                  Icons.cloud_off,
+                  size: 64,
+                  color: Colors.grey[600],
+                ),
+                const SizedBox(height: 20),
                 const Text(
-                  'API Key Required',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  'AI Service Not Available',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
-                const Text(
-                  'To use the AI Companion, you need to provide your Google Gemini API Key.',
+                Text(
+                  'The AI chat feature requires proper configuration to work.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 14),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'How to run with API Key:',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(8),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[700],
                   ),
-                  child: const SelectableText(
-                    'flutter run --dart-define=GEMINI_API_KEY=your_key_here',
-                    style: TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 13,
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Colors.blue.withValues(alpha: 0.3),
+                      width: 1,
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Get your free API key at:',
-                  style: TextStyle(fontSize: 13),
-                ),
-                const SizedBox(height: 4),
-                const SelectableText(
-                  'https://aistudio.google.com/app/apikey',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.blue,
-                    decoration: TextDecoration.underline,
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        color: Colors.blue[700],
+                        size: 32,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'For Developers',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.blue[900],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Please contact the app administrator or check the documentation for setup instructions.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey[800],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
