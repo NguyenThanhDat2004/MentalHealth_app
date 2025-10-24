@@ -21,7 +21,7 @@ class MentalHealthApp extends StatefulWidget {
   static void setLocale(BuildContext context, Locale newLocale) {
     _MentalHealthAppState? state =
         context.findAncestorStateOfType<_MentalHealthAppState>();
-    // FIXED: Use the null-aware operator to safely call the method.
+    // Sử dụng null-aware operator để gọi method an toàn
     state?.setLocale(newLocale);
   }
 }
@@ -88,14 +88,26 @@ class _MainScreenState extends State<MainScreen> {
   String _userName = 'Thanh Dat';
   String? _avatarPath;
 
-  // IMPROVEMENT: Declare page and item lists here but initialize in initState.
   late final List<Widget> _pages;
-  late final List<Widget> _navBarItems;
+  late final List<IconData> _navBarIcons;
 
   @override
   void initState() {
     super.initState();
-    // IMPROVEMENT: Initialize lists once to avoid recreating them on every build.
+
+    // Khởi tạo danh sách icons
+    _navBarIcons = [
+      Icons.home,
+      Icons.videocam_outlined,
+      Icons.chat_bubble_outline,
+      Icons.people_outline,
+    ];
+
+    // Khởi tạo pages
+    _updatePages();
+  }
+
+  void _updatePages() {
     _pages = [
       HomeScreen(
         userName: _userName,
@@ -110,55 +122,29 @@ class _MainScreenState extends State<MainScreen> {
         onAvatarUpdated: _updateUserAvatar,
       ),
     ];
-
-    _navBarItems = [
-      // We'll build the icons dynamically in the build method
-      // to reflect color changes, but the list structure is defined here.
-      const Icon(Icons.home, size: 30),
-      const Icon(Icons.videocam_outlined, size: 30),
-      const Icon(Icons.chat_bubble_outline, size: 30),
-      const Icon(Icons.people_outline, size: 30),
-    ];
   }
 
   void _updateUserName(String newName) {
     setState(() {
       _userName = newName;
-      // Re-initialize the pages list with the new username
-      _pages[0] = HomeScreen(userName: _userName, avatarPath: _avatarPath);
-      _pages[3] = ProfileScreen(
-        initialName: _userName,
-        onNameUpdated: _updateUserName,
-        initialAvatarPath: _avatarPath,
-        onAvatarUpdated: _updateUserAvatar,
-      );
+      _updatePages();
     });
   }
 
   void _updateUserAvatar(String newPath) {
     setState(() {
       _avatarPath = newPath;
-      // Re-initialize all pages that use the avatar
-      _pages[0] = HomeScreen(userName: _userName, avatarPath: _avatarPath);
-      _pages[1] = SessionsScreen(avatarPath: _avatarPath);
-      _pages[2] = CommunityScreen(avatarPath: _avatarPath);
-      _pages[3] = ProfileScreen(
-        initialName: _userName,
-        onNameUpdated: _updateUserName,
-        initialAvatarPath: _avatarPath,
-        onAvatarUpdated: _updateUserAvatar,
-      );
+      _updatePages();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // Dynamically color the icons based on the current index
-    final items = List.generate(_navBarItems.length, (index) {
-      final icon = _navBarItems[index] as Icon;
+    // Tạo navigation items với màu động
+    final items = List.generate(_navBarIcons.length, (index) {
       return Icon(
-        icon.icon,
-        size: icon.size,
+        _navBarIcons[index],
+        size: 30,
         color: _currentIndex == index
             ? const Color(0xFF5DB075)
             : Colors.grey.shade500,

@@ -4,11 +4,11 @@ import 'package:http/http.dart' as http;
 import 'widgets/glass_card.dart';
 import 'widgets/liquid_background.dart';
 
-// Hardcode API key for testing
-// Delete after testing!
+// Hardcode API key để test
+// Deleting after testing!
 const String _apiKey = String.fromEnvironment(
   'GEMINI_API_KEY',
-  defaultValue: 'AIzaSyCcudhaJxV2IcW5dis-AEJxn5ybRni7z7I', // ← Key của bạn
+  defaultValue: 'AIzaSyCcudhaJxV2IcW5dis-AEJxn5ybRni7z7I', // Key of your
 );
 
 class AiChatScreen extends StatefulWidget {
@@ -32,12 +32,12 @@ class _AiChatScreenState extends State<AiChatScreen> {
   static const String _baseUrlV1Beta =
       'https://generativelanguage.googleapis.com/v1beta/models';
 
-  // Danh sách models khả dụng (dựa trên API response)
+  // Danh sách models khả dụng (ưu tiên models ít tải hơn)
   static const List<Map<String, String>> _modelsToTry = [
+    {'name': 'gemini-2.0-flash-lite', 'apiVersion': 'v1'}, // Nhẹ nhất
+    {'name': 'gemini-2.5-flash-lite', 'apiVersion': 'v1'},
     {'name': 'gemini-2.0-flash', 'apiVersion': 'v1'},
     {'name': 'gemini-2.5-flash', 'apiVersion': 'v1'},
-    {'name': 'gemini-2.0-flash-lite', 'apiVersion': 'v1'},
-    {'name': 'gemini-2.5-flash-lite', 'apiVersion': 'v1'},
     {'name': 'gemini-2.5-pro', 'apiVersion': 'v1'},
   ];
 
@@ -75,7 +75,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
         );
 
         if (response != null && response.isNotEmpty) {
-          debugPrint('✅ SUCCESS with ${modelConfig['name']}');
+          debugPrint('SUCCESS with ${modelConfig['name']}');
           setState(() {
             _workingModel = modelConfig['name'];
             _workingApiVersion = modelConfig['apiVersion'];
@@ -108,10 +108,13 @@ class _AiChatScreenState extends State<AiChatScreen> {
     String userMessage, {
     String? modelName,
     String? apiVersion,
+    int retryCount = 0,
   }) async {
+    const maxRetries = 2;
+
     try {
-      final model = modelName ?? _workingModel ?? 'gemini-pro';
-      final version = apiVersion ?? _workingApiVersion ?? 'v1beta';
+      final model = modelName ?? _workingModel ?? 'gemini-2.0-flash-lite';
+      final version = apiVersion ?? _workingApiVersion ?? 'v1';
       final baseUrl = version == 'v1' ? _baseUrlV1 : _baseUrlV1Beta;
 
       final url = Uri.parse('$baseUrl/$model:generateContent?key=$_apiKey');
@@ -157,6 +160,17 @@ class _AiChatScreenState extends State<AiChatScreen> {
           final text = data['candidates'][0]['content']['parts'][0]['text'];
           return text as String;
         }
+      } else if (response.statusCode == 503 && retryCount < maxRetries) {
+        // Retry khi gặp 503 (overload)
+        debugPrint(
+            'Model overloaded, retrying in 2 seconds... (${retryCount + 1}/$maxRetries)');
+        await Future.delayed(const Duration(seconds: 2));
+        return _callGeminiAPI(
+          userMessage,
+          modelName: modelName,
+          apiVersion: apiVersion,
+          retryCount: retryCount + 1,
+        );
       } else {
         throw Exception('API Error: ${response.statusCode} - ${response.body}');
       }
