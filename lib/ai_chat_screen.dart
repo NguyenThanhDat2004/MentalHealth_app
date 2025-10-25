@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 // Sử dụng biến môi trường để bảo mật API Key
 const String _apiKey = String.fromEnvironment(
   'GEMINI_API_KEY',
-  defaultValue: 'AIzaSyCcudhaJxV2IcW5dis-AEJxn5ybRni7z7I',
+  defaultValue: '',
 );
 
 class AiChatScreen extends StatefulWidget {
