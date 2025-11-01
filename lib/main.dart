@@ -109,10 +109,7 @@ class _MainScreenState extends State<MainScreen> {
 
   void _updatePages() {
     _pages = [
-      HomeScreen(
-        userName: _userName,
-        avatarPath: _avatarPath,
-      ),
+      HomeScreen(userName: _userName, avatarPath: _avatarPath),
       SessionsScreen(avatarPath: _avatarPath),
       CommunityScreen(avatarPath: _avatarPath),
       ProfileScreen(
