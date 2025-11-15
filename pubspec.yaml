@@ -15,12 +15,18 @@ dependencies:
   flutter_localizations:
     sdk: flutter
 
-  intl: ^0.20.2
+  intl: ^0.20.2 # ĐÃ SỬA: Trả về phiên bản 0.20.2 mà SDK của bạn yêu cầu
   curved_navigation_bar: ^1.0.3
   flutter_staggered_animations: ^1.1.1
   image_picker: ^1.0.7
   cupertino_icons: ^1.0.8 # Updated to latest version
-  http: ^1.5.0
+  http: ^1.5.0 # ĐÃ SỬA: Trả về phiên bản 1.5.0 (phiên bản pre-release bạn đã dùng)
+
+  # THÊM MỚI: Các gói Firebase cần thiết cho AiChatScreen
+  firebase_core: ^2.31.0
+  firebase_auth: ^4.19.4
+  cloud_firestore: ^4.17.2
+
   # liquid_glass_renderer: ^0.1.1-dev.10  # Commented out (dev version, may be unstable)
 
 dev_dependencies:

@@ -31,6 +31,9 @@ class _HomeScreenState extends State<HomeScreen> {
   String _currentDate = '';
   String _greeting = '';
 
+  // ĐÃ THÊM: Biến state để theo dõi tâm trạng được chọn
+  int? _selectedMoodIndex;
+
   @override
   void initState() {
     super.initState();
@@ -55,6 +58,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Updates time, date, and greeting message based on current hour
   void _updateTime() {
+    // ... (existing code, no changes)
     if (!mounted) return;
     final now = DateTime.now();
     final localizations = AppLocalizations.of(context);
@@ -86,8 +90,18 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // ĐÃ THÊM: Hàm callback để cập nhật trạng thái
+  void _onMoodSelected(int index) {
+    setState(() {
+      _selectedMoodIndex = index;
+    });
+    // Bạn có thể thêm logic khác ở đây, ví dụ: gửi dữ liệu
+    // print('Selected mood index: $index');
+  }
+
   @override
   Widget build(BuildContext context) {
+    // ... (existing code, no changes)
     final localizations = AppLocalizations.of(context)!;
 
     // Build UI components dynamically based on plan status
@@ -144,6 +158,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Greeting header with avatar, notifications, date & time
   Widget _buildGreetingHeader(AppLocalizations localizations) {
+    // ... (existing code, no changes)
     // Use custom avatar if provided, otherwise default network image
     final ImageProvider avatarImage = widget.avatarPath != null
         ? (widget.avatarPath!.startsWith('http')
@@ -203,6 +218,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Session advertisement card
   Widget _buildSessionCard() {
+    // ... (existing code, no changes)
     return const Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -235,6 +251,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Motivational quote card
   Widget _buildQuoteCard() {
+    // ... (existing code, no changes)
     return const Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -250,13 +267,14 @@ class _HomeScreenState extends State<HomeScreen> {
         SizedBox(width: 10),
         Text('”',
             style:
-                TextStyle(fontSize: 60, color: Color(0xFFE5E5E5), height: 0.5)),
+                TextStyle(fontSize: 60, color: Color(0xFFE5E5EE), height: 0.5)),
       ],
     );
   }
 
   /// Simple header for expired plan (minimal info)
   Widget _buildSimpleHeader() {
+    // ... (existing code, no changes)
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -285,50 +303,108 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   /// Mood selection with icons (when plan is expired)
+  /// ĐÃ CẬP NHẬT: Trở nên động và tương tác
   Widget _buildIconMoodSelection() {
-    return const Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _IconMoodWidget(
-            icon: Icons.sentiment_very_satisfied,
-            text: 'Happy',
-            color: Color(0xFFE84F8F)),
-        _IconMoodWidget(
-            icon: Icons.self_improvement,
-            text: 'Calm',
-            color: Color(0xFF7C83FD)),
-        _IconMoodWidget(
-            icon: Icons.sync_problem, text: 'Manic', color: Color(0xFF63D2D6)),
-        _IconMoodWidget(
-            icon: Icons.sentiment_very_dissatisfied,
-            text: 'Angry',
-            color: Color(0xFFF39C12)),
-        _IconMoodWidget(
-            icon: Icons.sentiment_dissatisfied,
-            text: 'Sad',
-            color: Colors.green,
-            isPartial: true),
-      ],
+    final List<Map<String, dynamic>> moods = [
+      {
+        'icon': Icons.sentiment_very_satisfied,
+        'text': 'Happy',
+        'color': const Color(0xFFE84F8F)
+      },
+      {
+        'icon': Icons.self_improvement,
+        'text': 'Calm',
+        'color': const Color(0xFF7C83FD)
+      },
+      {
+        'icon': Icons.sync_problem,
+        'text': 'Manic',
+        'color': const Color(0xFF63D2D6)
+      },
+      {
+        'icon': Icons.sentiment_very_dissatisfied,
+        'text': 'Angry',
+        'color': const Color(0xFFF39C12)
+      },
+      {
+        'icon': Icons.sentiment_dissatisfied,
+        'text': 'Sad',
+        'color': Colors.green,
+        // 'isPartial': true // <-- LỖI 2: Đã xóa dòng này
+      },
+    ];
+
+    // ĐÃ THAY ĐỔI: Thay thế Row bằng SizedBox + ListView.builder
+    return SizedBox(
+      height: 100, // Thêm chiều cao cố định cho ListView
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: moods.length,
+        padding:
+            const EdgeInsets.symmetric(horizontal: 20), // Thêm padding cho list
+        itemBuilder: (context, index) {
+          final mood = moods[index];
+          return Padding(
+            padding: const EdgeInsets.only(
+                right: 15), // Thêm khoảng cách giữa các item
+            child: _IconMoodWidget(
+              icon: mood['icon'],
+              text: mood['text'],
+              color: mood['color'],
+              // isPartial: mood['isPartial'] ?? false, // <-- Đã xóa
+              isSelected: _selectedMoodIndex == index,
+              onTap: () => _onMoodSelected(index),
+            ),
+          );
+        },
+      ),
     );
   }
 
   /// Mood selection with emojis (default mode)
+  /// ĐÃ CẬP NHẬT: Trở nên động và tương tác
   Widget _buildEmojiMoodSelection() {
-    return const Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _EmojiMoodWidget(emoji: '😄', text: 'Happy', color: Color(0xFFE84F8F)),
-        _EmojiMoodWidget(emoji: '☯️', text: 'Calm', color: Color(0xFF7C83FD)),
-        _EmojiMoodWidget(emoji: '🌀', text: 'Manic', color: Color(0xFF63D2D6)),
-        _EmojiMoodWidget(emoji: '😠', text: 'Angry', color: Color(0xFFF39C12)),
-        _EmojiMoodWidget(
-            emoji: '😔', text: 'Sad', color: Colors.green, isPartial: true),
-      ],
+    final List<Map<String, dynamic>> moods = [
+      {'emoji': '😄', 'text': 'Happy', 'color': const Color(0xFFE84F8F)},
+      {'emoji': '☯️', 'text': 'Calm', 'color': const Color(0xFF7C83FD)},
+      {'emoji': '🌀', 'text': 'Manic', 'color': const Color(0xFF63D2D6)},
+      {'emoji': '😠', 'text': 'Angry', 'color': const Color(0xFFF39C12)},
+      {
+        'emoji': '😔', 'text': 'Sad', 'color': Colors.green,
+        // 'isPartial': true // <-- LỖI 2: Đã xóa dòng này
+      },
+    ];
+
+    // ĐÃ THAY ĐỔI: Thay thế Row bằng SizedBox + ListView.builder
+    return SizedBox(
+      height: 110, // Thêm chiều cao cố định cho ListView
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: moods.length,
+        padding:
+            const EdgeInsets.symmetric(horizontal: 20), // Thêm padding cho list
+        itemBuilder: (context, index) {
+          final mood = moods[index];
+          return Padding(
+            padding: const EdgeInsets.only(
+                right: 15), // Thêm khoảng cách giữa các item
+            child: _EmojiMoodWidget(
+              emoji: mood['emoji'],
+              text: mood['text'],
+              color: mood['color'],
+              // isPartial: mood['isPartial'] ?? false, // <-- Đã xóa
+              isSelected: _selectedMoodIndex == index,
+              onTap: () => _onMoodSelected(index),
+            ),
+          );
+        },
+      ),
     );
   }
 
   /// Quick action buttons (Journal & Library)
   Widget _buildActionButtons() {
+    // ... (existing code, no changes)
     return Row(
       children: [
         Expanded(child: _actionButton(Icons.menu_book, 'Journal')),
@@ -340,6 +416,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Helper method to build an action button
   Widget _actionButton(IconData icon, String label) {
+    // ... (existing code, no changes)
     return ElevatedButton.icon(
       onPressed: () {},
       icon: Icon(icon, color: Colors.black54),
@@ -356,17 +433,22 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 /// Emoji mood selection widget
+/// ĐÃ CẬP NHẬT: Thêm isSelected và onTap
 class _EmojiMoodWidget extends StatelessWidget {
   final String emoji;
   final String text;
   final Color color;
-  final bool isPartial;
+  // final bool isPartial; // <-- ĐÃ XÓA
+  final bool isSelected;
+  final VoidCallback onTap;
 
   const _EmojiMoodWidget({
     required this.emoji,
     required this.text,
     required this.color,
-    this.isPartial = false,
+    // this.isPartial = false, // <-- ĐÃ XÓA
+    this.isSelected = false,
+    required this.onTap,
   });
 
   @override
@@ -374,7 +456,10 @@ class _EmojiMoodWidget extends StatelessWidget {
     Widget content = Container(
       padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
       decoration: BoxDecoration(
-          color: color.withAlpha(38), borderRadius: BorderRadius.circular(15)),
+          // Thay đổi màu nền và thêm viền nếu được chọn
+          color: isSelected ? color.withAlpha(80) : color.withAlpha(38),
+          borderRadius: BorderRadius.circular(15),
+          border: isSelected ? Border.all(color: color, width: 2) : null),
       child: Column(
         children: [
           Text(emoji, style: const TextStyle(fontSize: 28)),
@@ -383,30 +468,33 @@ class _EmojiMoodWidget extends StatelessWidget {
         ],
       ),
     );
-    // If partial, show only half of the widget
-    if (isPartial) {
-      return ClipRect(
-          child: Align(
-              alignment: Alignment.centerLeft,
-              widthFactor: 0.5,
-              child: content));
-    }
-    return content;
+
+    // ĐÃ THAY ĐỔI: Logic được đơn giản hóa, xóa bỏ isPartial
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: content, // Bọc 'content'
+    );
   }
 }
 
 /// Icon mood selection widget
+/// ĐÃ CẬP NHẬT: Thêm isSelected và onTap
 class _IconMoodWidget extends StatelessWidget {
   final IconData icon;
   final String text;
   final Color color;
-  final bool isPartial;
+  // final bool isPartial; // <-- ĐÃ XÓA
+  final bool isSelected;
+  final VoidCallback onTap;
 
   const _IconMoodWidget({
     required this.icon,
     required this.text,
     required this.color,
-    this.isPartial = false,
+    // this.isPartial = false, // <-- ĐÃ XÓA
+    this.isSelected = false,
+    required this.onTap,
   });
 
   @override
@@ -417,24 +505,28 @@ class _IconMoodWidget extends StatelessWidget {
           width: 60,
           height: 60,
           decoration: BoxDecoration(
-              color: color.withAlpha(51),
-              borderRadius: BorderRadius.circular(18)),
+              // Thay đổi màu nền và thêm viền nếu được chọn
+              color: isSelected ? color.withAlpha(80) : color.withAlpha(51),
+              borderRadius: BorderRadius.circular(18),
+              border: isSelected ? Border.all(color: color, width: 2) : null),
           child: Icon(icon, color: color, size: 35),
         ),
+
+        // 1. ĐÃ SỬA: Thêm lại SizedBox
         const SizedBox(height: 8),
+
+        // 2. ĐÃ SỬA: Thêm lại Text widget
         Text(text,
             style: const TextStyle(
                 fontWeight: FontWeight.w600, color: Colors.grey)),
-      ],
+      ], // <-- 3. ĐÃ SỬA: Thêm dấu ']' bị thiếu để đóng 'children'
     );
-    // If partial, show only half of the widget
-    if (isPartial) {
-      return ClipRect(
-          child: Align(
-              alignment: Alignment.centerLeft,
-              widthFactor: 0.5,
-              child: content));
-    }
-    return content;
+
+    // ĐÃ THAY ĐỔI: Logic được đơn giản hóa, xóa bỏ isPartial
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: content, // Bọc 'content'
+    );
   }
 }

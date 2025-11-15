@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "1061255638870",
+    "project_id": "mentalhealth-app-demo",
+    "storage_bucket": "mentalhealth-app-demo.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1061255638870:android:f2361091d7f2c2ffd6b0f7",
+        "android_client_info": {
+          "package_name": "com.example.mentalheal_application_1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCr_1ZF4TyXAOWyBJCtBvi6IXML5BylFRA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1061255638870:android:9626fc0be8eac50bd6b0f7",
+        "android_client_info": {
+          "package_name": "com.example.mentalhealh_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCr_1ZF4TyXAOWyBJCtBvi6IXML5BylFRA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1061255638870:android:14664f58912328efd6b0f7",
+        "android_client_info": {
+          "package_name": "com.example.mentalheath_application"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCr_1ZF4TyXAOWyBJCtBvi6IXML5BylFRA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
