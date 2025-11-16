@@ -12,9 +12,7 @@ import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   runApp(const MentalHealthApp());
 }
@@ -28,7 +26,7 @@ class MentalHealthApp extends StatefulWidget {
   static void setLocale(BuildContext context, Locale newLocale) {
     _MentalHealthAppState? state =
         context.findAncestorStateOfType<_MentalHealthAppState>();
-    // Sử dụng null-aware operator để gọi method an toàn
+    // ✅ FIXED: Thêm ? để gọi method an toàn
     state?.setLocale(newLocale);
   }
 }
@@ -102,7 +100,6 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
 
-    // Khởi tạo danh sách icons
     _navBarIcons = [
       Icons.home,
       Icons.videocam_outlined,
@@ -110,7 +107,6 @@ class _MainScreenState extends State<MainScreen> {
       Icons.people_outline,
     ];
 
-    // Khởi tạo pages
     _updatePages();
   }
 
@@ -144,7 +140,6 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Tạo navigation items với màu động
     final items = List.generate(_navBarIcons.length, (index) {
       return Icon(
         _navBarIcons[index],

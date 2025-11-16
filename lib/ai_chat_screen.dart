@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-// Sử dụng biến môi trường để bảo mật API Key
 const String _apiKey = String.fromEnvironment(
   'GEMINI_API_KEY',
   defaultValue: 'AIzaSyCcudhaJxV2IcW5dis-AEJxn5ybRni7z7I',
@@ -28,6 +27,33 @@ class ChatHistory {
     this.isPinned = false,
     required this.preview,
   });
+
+  // Thêm method để convert sang Map
+  Map<String, dynamic> toMap() {
+    return {
+      'title': title,
+      'createdAt': Timestamp.fromDate(createdAt),
+      'messages': messages,
+      'isPinned': isPinned,
+      'preview': preview,
+    };
+  }
+
+  // Thêm method để tạo từ Map
+  factory ChatHistory.fromMap(String id, Map<String, dynamic> data) {
+    return ChatHistory(
+      id: id,
+      title: data['title'] ?? 'New Chat',
+      createdAt: (data['createdAt'] as Timestamp).toDate(),
+      messages: List<Map<String, String>>.from(
+        (data['messages'] as List<dynamic>? ?? []).map(
+          (msg) => Map<String, String>.from(msg as Map),
+        ),
+      ),
+      isPinned: data['isPinned'] ?? false,
+      preview: data['preview'] ?? '',
+    );
+  }
 }
 
 class AiChatScreen extends StatefulWidget {
@@ -49,14 +75,13 @@ class _AiChatScreenState extends State<AiChatScreen>
   final List<ChatHistory> _chatHistory = [];
   bool _showHistory = false;
   final _historyScrollController = ScrollController();
-
-  // THÊM MỚI: Biến để theo dõi chat session hiện tại
   String? _currentChatId;
 
   late final FirebaseFirestore _db;
   late final FirebaseAuth _auth;
   String? _userId;
   StreamSubscription? _chatSubscription;
+  bool _isAuthInitialized = false;
 
   late AnimationController _animationController;
   late Animation<double> _waveAnimation;
@@ -77,7 +102,6 @@ class _AiChatScreenState extends State<AiChatScreen>
   String? _workingModel;
   String? _workingApiVersion;
 
-  // Color Scheme
   final Color _primaryColor = const Color(0xFF6366F1);
   final Color _secondaryColor = const Color(0xFF8B5CF6);
   final Color _accentColor = const Color(0xFF06D6A0);
@@ -90,21 +114,43 @@ class _AiChatScreenState extends State<AiChatScreen>
   void initState() {
     super.initState();
     _initializeAnimations();
-    _initialize();
 
+    // Khởi tạo Firebase
     _db = FirebaseFirestore.instance;
     _auth = FirebaseAuth.instance;
 
-    _auth.authStateChanges().listen((User? user) {
-      if (user != null) {
+    // Khởi tạo AI và Auth song song
+    _initializeApp();
+  }
+
+  Future<void> _initializeApp() async {
+    // Chạy song song để nhanh hơn
+    await Future.wait([
+      _initialize(), // Khởi tạo AI
+      _initializeAuth(), // Khởi tạo Auth
+    ]);
+  }
+
+  Future<void> _initializeAuth() async {
+    try {
+      // Kiểm tra user hiện tại
+      final currentUser = _auth.currentUser;
+      if (currentUser != null) {
         setState(() {
-          _userId = user.uid;
+          _userId = currentUser.uid;
+          _isAuthInitialized = true;
         });
-        _loadChatHistory();
+        await _loadChatHistory();
       } else {
-        _signInAnonymously();
+        // Sign in anonymously nếu chưa có user
+        await _signInAnonymously();
       }
-    });
+    } catch (e) {
+      debugPrint("Error initializing auth: $e");
+      setState(() {
+        _errorMessage = "Không thể kết nối dịch vụ chat.";
+      });
+    }
   }
 
   Future<void> _signInAnonymously() async {
@@ -112,12 +158,13 @@ class _AiChatScreenState extends State<AiChatScreen>
       final userCredential = await _auth.signInAnonymously();
       setState(() {
         _userId = userCredential.user?.uid;
+        _isAuthInitialized = true;
       });
-      _loadChatHistory();
+      await _loadChatHistory();
     } catch (e) {
       debugPrint("Error signing in anonymously: $e");
       setState(() {
-        _errorMessage = "Could not sign in to chat service.";
+        _errorMessage = "Không thể đăng nhập dịch vụ chat.";
       });
     }
   }
@@ -136,93 +183,104 @@ class _AiChatScreenState extends State<AiChatScreen>
     );
   }
 
-  void _loadChatHistory() {
+  Future<void> _loadChatHistory() async {
     if (_userId == null) return;
 
-    _chatSubscription?.cancel();
-    final collectionRef =
-        _db.collection('users').doc(_userId).collection('chats');
+    try {
+      _chatSubscription?.cancel();
+      final collectionRef =
+          _db.collection('users').doc(_userId).collection('chats');
 
-    _chatSubscription = collectionRef
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .listen((snapshot) {
-      final chats = snapshot.docs.map((doc) {
-        final data = doc.data();
-        return ChatHistory(
-          id: doc.id,
-          title: data['title'] ?? 'New Chat',
-          createdAt: (data['createdAt'] as Timestamp).toDate(),
-          messages: List<Map<String, String>>.from(
-            (data['messages'] as List<dynamic>? ?? []).map(
-              (msg) => Map<String, String>.from(msg),
-            ),
-          ),
-          isPinned: data['isPinned'] ?? false,
-          preview: data['preview'] ?? '',
-        );
-      }).toList();
+      _chatSubscription = collectionRef
+          .orderBy('createdAt', descending: true)
+          .limit(50) // Giới hạn số lượng để load nhanh hơn
+          .snapshots()
+          .listen((snapshot) {
+        final chats = snapshot.docs.map((doc) {
+          return ChatHistory.fromMap(doc.id, doc.data());
+        }).toList();
 
-      setState(() {
-        _chatHistory.clear();
-        _chatHistory.addAll(chats);
+        if (mounted) {
+          setState(() {
+            _chatHistory.clear();
+            _chatHistory.addAll(chats);
+          });
+        }
+      }, onError: (e) {
+        debugPrint("Error loading chat history: $e");
+        _showError("Không thể tải lịch sử chat.");
       });
-    }, onError: (e) {
-      debugPrint("Error loading chat history: $e");
-      _showError("Failed to load chat history.");
-    });
+    } catch (e) {
+      debugPrint("Error setting up chat listener: $e");
+    }
   }
 
-  // ĐÃ SỬA: Đổi tên thành _saveNewChat và trả về ID của chat mới
   Future<String?> _saveNewChat() async {
-    if (_userId == null) return null;
-    if (_messages.length > 1) {
+    if (_userId == null || !_isAuthInitialized) {
+      debugPrint(
+          "Cannot save chat: userId=$_userId, authInit=$_isAuthInitialized");
+      return null;
+    }
+
+    if (_messages.length < 2) {
+      debugPrint("Not enough messages to save");
+      return null;
+    }
+
+    try {
       final newChat = ChatHistory(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         title: _generateChatTitle(),
         createdAt: DateTime.now(),
         messages: List.from(_messages),
         preview: _messages.length > 1
-            ? _messages[1]['text']!
-            : _messages[0]['text']!,
+            ? (_messages[1]['text']?.substring(0, 50) ?? 'New Chat')
+            : 'New Chat',
       );
 
-      try {
-        final collectionRef =
-            _db.collection('users').doc(_userId).collection('chats');
-        // SỬA: Dùng add() và lấy DocumentReference
-        final docRef = await collectionRef.add({
-          'title': newChat.title,
-          'createdAt': Timestamp.fromDate(newChat.createdAt),
-          'messages': newChat.messages,
-          'isPinned': newChat.isPinned,
-          'preview': newChat.preview,
-        });
-        return docRef.id; // <-- TRẢ VỀ ID CHAT MỚI
-      } catch (e) {
-        debugPrint("Error saving chat: $e");
-        _showError("Could not save your chat.");
-      }
+      debugPrint("Saving chat with ${_messages.length} messages");
+
+      final collectionRef =
+          _db.collection('users').doc(_userId).collection('chats');
+
+      final docRef = await collectionRef.add(newChat.toMap());
+
+      debugPrint("Chat saved successfully with ID: ${docRef.id}");
+      return docRef.id;
+    } catch (e) {
+      debugPrint("Error saving chat: $e");
+      _showError("Không thể lưu cuộc trò chuyện.");
+      return null;
     }
-    return null;
   }
 
-  // THÊM MỚI: Hàm để cập nhật chat đã có
   Future<void> _updateExistingChat() async {
-    if (_userId == null || _currentChatId == null) return;
+    if (_userId == null || _currentChatId == null || !_isAuthInitialized) {
+      debugPrint("Cannot update chat: userId=$_userId, chatId=$_currentChatId");
+      return;
+    }
+
     try {
       final docRef = _db
           .collection('users')
           .doc(_userId)
           .collection('chats')
           .doc(_currentChatId);
-      // Cập nhật danh sách tin nhắn
+
+      debugPrint(
+          "Updating chat $_currentChatId with ${_messages.length} messages");
+
       await docRef.update({
         'messages': _messages,
+        'preview': _messages.isNotEmpty
+            ? (_messages.last['text']?.substring(0, 50) ?? '')
+            : '',
       });
+
+      debugPrint("Chat updated successfully");
     } catch (e) {
       debugPrint("Error updating chat: $e");
-      _showError("Could not update your chat.");
+      _showError("Không thể cập nhật cuộc trò chuyện.");
     }
   }
 
@@ -230,7 +288,7 @@ class _AiChatScreenState extends State<AiChatScreen>
     if (_messages.length > 1) {
       final firstUserMessage = _messages.firstWhere(
         (msg) => msg['role'] == 'user',
-        orElse: () => {'text': 'New Chat'},
+        orElse: () => const {'text': 'New Chat'},
       )['text']!;
 
       return firstUserMessage.length > 30
@@ -243,16 +301,48 @@ class _AiChatScreenState extends State<AiChatScreen>
   Future<void> _initialize() async {
     if (_apiKey.isEmpty) {
       setState(() {
-        _errorMessage =
-            'API Key not provided. Please run with --dart-define=GEMINI_API_KEY=YOUR_KEY';
+        _errorMessage = 'API Key không được cung cấp';
       });
       return;
     }
 
-    for (final modelConfig in _modelsToTry) {
+    // Thử model đầu tiên trước, không test tất cả
+    final firstModel = _modelsToTry[0];
+    try {
+      debugPrint('🤖 Testing model: ${firstModel['name']}');
+      const testMessage = 'Hi';
+      final response = await _callGeminiAPI(
+        testMessage,
+        modelName: firstModel['name']!,
+        apiVersion: firstModel['apiVersion']!,
+      );
+
+      if (response != null && response.isNotEmpty) {
+        debugPrint('✅ Model working: ${firstModel['name']}');
+        if (mounted) {
+          setState(() {
+            _workingModel = firstModel['name'];
+            _workingApiVersion = firstModel['apiVersion'];
+            _isInitialized = true;
+            _messages.add(const {
+              'role': 'model',
+              'text':
+                  'Xin chào! Tôi là AI Companion. Tôi có thể giúp gì cho bạn hôm nay?'
+            });
+          });
+        }
+        return;
+      }
+    } catch (e) {
+      debugPrint('❌ Model failed: ${firstModel['name']}: $e');
+    }
+
+    // Nếu model đầu không work, thử các model khác
+    for (var i = 1; i < _modelsToTry.length; i++) {
+      final modelConfig = _modelsToTry[i];
       try {
-        debugPrint('🤖 Trying model: ${modelConfig['name']}');
-        const testMessage = 'Hello';
+        debugPrint('🤖 Trying fallback model: ${modelConfig['name']}');
+        const testMessage = 'Hi';
         final response = await _callGeminiAPI(
           testMessage,
           modelName: modelConfig['name']!,
@@ -260,30 +350,32 @@ class _AiChatScreenState extends State<AiChatScreen>
         );
 
         if (response != null && response.isNotEmpty) {
-          debugPrint('SUCCESS with ${modelConfig['name']}');
-          setState(() {
-            _workingModel = modelConfig['name'];
-            _workingApiVersion = modelConfig['apiVersion'];
-            _isInitialized = true;
-            _messages.add({
-              'role': 'model',
-              'text':
-                  'Xin chào! Tôi là AI Companion. Tôi có thể giúp gì cho bạn hôm nay?'
+          debugPrint('✅ Fallback model working: ${modelConfig['name']}');
+          if (mounted) {
+            setState(() {
+              _workingModel = modelConfig['name'];
+              _workingApiVersion = modelConfig['apiVersion'];
+              _isInitialized = true;
+              _messages.add(const {
+                'role': 'model',
+                'text':
+                    'Xin chào! Tôi là AI Companion. Tôi có thể giúp gì cho bạn hôm nay?'
+              });
             });
-          });
+          }
           return;
         }
       } catch (e) {
-        debugPrint('FAILED ${modelConfig['name']}: $e');
+        debugPrint('❌ Fallback failed: ${modelConfig['name']}: $e');
         continue;
       }
     }
 
-    debugPrint('ALL MODELS FAILED');
-    setState(() {
-      _errorMessage =
-          'Could not connect to any AI model. Please check your API key or try again later.';
-    });
+    if (mounted) {
+      setState(() {
+        _errorMessage = 'Không thể kết nối AI. Vui lòng thử lại sau.';
+      });
+    }
   }
 
   Future<String?> _callGeminiAPI(
@@ -303,7 +395,7 @@ class _AiChatScreenState extends State<AiChatScreen>
 
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: const {'Content-Type': 'application/json'},
         body: jsonEncode({
           'contents': [
             {
@@ -312,7 +404,7 @@ class _AiChatScreenState extends State<AiChatScreen>
               ]
             }
           ],
-          'safetySettings': [
+          'safetySettings': const [
             {'category': 'HARM_CATEGORY_HARASSMENT', 'threshold': 'BLOCK_NONE'},
             {
               'category': 'HARM_CATEGORY_HATE_SPEECH',
@@ -327,7 +419,7 @@ class _AiChatScreenState extends State<AiChatScreen>
               'threshold': 'BLOCK_NONE'
             }
           ],
-          'generationConfig': {
+          'generationConfig': const {
             'temperature': 0.7,
             'topK': 40,
             'topP': 0.95,
@@ -343,8 +435,7 @@ class _AiChatScreenState extends State<AiChatScreen>
           return text as String;
         }
       } else if (response.statusCode == 503 && retryCount < maxRetries) {
-        debugPrint(
-            '⚠️ Model overloaded, retrying... (${retryCount + 1}/$maxRetries)');
+        debugPrint('⚠️ Retrying... (${retryCount + 1}/$maxRetries)');
         await Future.delayed(const Duration(seconds: 2));
         return _callGeminiAPI(
           userMessage,
@@ -353,7 +444,7 @@ class _AiChatScreenState extends State<AiChatScreen>
           retryCount: retryCount + 1,
         );
       } else {
-        throw Exception('API Error: ${response.statusCode} - ${response.body}');
+        throw Exception('API Error: ${response.statusCode}');
       }
     } catch (e) {
       rethrow;
@@ -376,7 +467,6 @@ class _AiChatScreenState extends State<AiChatScreen>
     return Scaffold(
       backgroundColor: _backgroundColor,
       body: SafeArea(
-        // THÊM SafeArea Ở ĐÂY
         child: Stack(
           children: [
             _buildAnimatedBackground(),
@@ -411,9 +501,9 @@ class _AiChatScreenState extends State<AiChatScreen>
               center: Alignment.topLeft,
               radius: 1.5 + _waveAnimation.value * 0.5,
               colors: [
-                _primaryColor.withOpacity(0.03),
-                _secondaryColor.withOpacity(0.02),
-                _backgroundColor.withOpacity(0.9),
+                _primaryColor.withValues(alpha: 0.03),
+                _secondaryColor.withValues(alpha: 0.02),
+                _backgroundColor.withValues(alpha: 0.9),
               ],
             ),
           ),
@@ -425,26 +515,25 @@ class _AiChatScreenState extends State<AiChatScreen>
   Widget _buildAppBar() {
     return Container(
       margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.symmetric(
-          horizontal: 20, vertical: 12), // GIẢM padding vertical
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       decoration: BoxDecoration(
         color: _surfaceColor,
-        borderRadius: BorderRadius.circular(16), // GIẢM border radius
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 15, // GIẢM blur radius
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 15,
             offset: const Offset(0, 5),
           ),
         ],
         border: Border.all(
-          color: Colors.white.withOpacity(0.5),
+          color: Colors.white.withValues(alpha: 0.5),
         ),
       ),
       child: Row(
         children: [
           Container(
-            width: 40, // GIẢM kích thước
+            width: 40,
             height: 40,
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -455,7 +544,7 @@ class _AiChatScreenState extends State<AiChatScreen>
             child: const Icon(
               Icons.psychology_rounded,
               color: Colors.white,
-              size: 20, // GIẢM kích thước icon
+              size: 20,
             ),
           ),
           const SizedBox(width: 12),
@@ -464,7 +553,7 @@ class _AiChatScreenState extends State<AiChatScreen>
               'AI Companion',
               style: TextStyle(
                 fontWeight: FontWeight.w700,
-                fontSize: 18, // GIẢM font size
+                fontSize: 18,
                 color: Colors.black87,
               ),
             ),
@@ -475,9 +564,8 @@ class _AiChatScreenState extends State<AiChatScreen>
               if (!_showHistory) {
                 setState(() {
                   _messages.clear();
-                  _currentChatId = null; // Xóa ID chat cũ
-                  // Thêm lại tin nhắn chào
-                  _messages.add({
+                  _currentChatId = null;
+                  _messages.add(const {
                     'role': 'model',
                     'text':
                         'Xin chào! Tôi là AI Companion. Tôi có thể giúp gì cho bạn hôm nay?'
@@ -488,7 +576,7 @@ class _AiChatScreenState extends State<AiChatScreen>
             icon: Icon(
               _showHistory ? Icons.chat_bubble : Icons.history,
               color: _primaryColor,
-              size: 22, // GIẢM kích thước icon
+              size: 22,
             ),
           ),
         ],
@@ -498,16 +586,14 @@ class _AiChatScreenState extends State<AiChatScreen>
 
   Widget _buildConnectingIndicator() {
     return Container(
-      margin: const EdgeInsets.symmetric(
-          horizontal: 16, vertical: 8), // ĐIỀU CHỈNH margin
-      padding: const EdgeInsets.symmetric(
-          horizontal: 16, vertical: 12), // GIẢM padding
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: _surfaceColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -517,19 +603,19 @@ class _AiChatScreenState extends State<AiChatScreen>
         mainAxisSize: MainAxisSize.min,
         children: [
           SizedBox(
-            width: 18, // GIẢM kích thước
+            width: 18,
             height: 18,
             child: CircularProgressIndicator(
               strokeWidth: 2,
               valueColor: AlwaysStoppedAnimation<Color>(_primaryColor),
             ),
           ),
-          const SizedBox(width: 10), // GIẢM khoảng cách
+          const SizedBox(width: 10),
           Text(
             'Đang kết nối AI...',
             style: TextStyle(
               color: _textSecondary,
-              fontSize: 13, // GIẢM font size
+              fontSize: 13,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -541,20 +627,17 @@ class _AiChatScreenState extends State<AiChatScreen>
   Widget _buildErrorHeader() {
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.symmetric(
-          horizontal: 16, vertical: 8), // ĐIỀU CHỈNH margin
-      padding: const EdgeInsets.symmetric(
-          horizontal: 16, vertical: 12), // GIẢM padding
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.red.withOpacity(0.05),
+        color: Colors.red.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.red.withOpacity(0.2)),
+        border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
-          Icon(Icons.error_outline,
-              color: Colors.red.shade600, size: 20), // GIẢM kích thước
-          const SizedBox(width: 10), // GIẢM khoảng cách
+          Icon(Icons.error_outline, color: Colors.red.shade600, size: 20),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -564,14 +647,14 @@ class _AiChatScreenState extends State<AiChatScreen>
                   style: TextStyle(
                     color: Colors.red.shade700,
                     fontWeight: FontWeight.w600,
-                    fontSize: 13, // GIẢM font size
+                    fontSize: 13,
                   ),
                 ),
                 Text(
                   'Vui lòng kiểm tra kết nối mạng',
                   style: TextStyle(
                     color: Colors.red.shade600,
-                    fontSize: 11, // GIẢM font size
+                    fontSize: 11,
                   ),
                 ),
               ],
@@ -583,23 +666,18 @@ class _AiChatScreenState extends State<AiChatScreen>
   }
 
   Widget _buildChatInterface() {
-    return Stack(
-      children: [
-        _errorMessage != null
-            ? _buildErrorWidget()
-            : !_isInitialized
-                ? _buildWelcomeWidget()
-                : _buildChatMessages(),
-      ],
-    );
+    return _errorMessage != null
+        ? _buildErrorWidget()
+        : !_isInitialized
+            ? _buildWelcomeWidget()
+            : _buildChatMessages();
   }
 
   Widget _buildChatMessages() {
     return ListView.builder(
       controller: _scrollController,
       itemCount: _messages.length,
-      padding: const EdgeInsets.symmetric(
-          vertical: 8, horizontal: 12), // GIẢM padding
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       itemBuilder: (context, index) {
         final message = _messages[index];
         return MessageWidget(
@@ -614,15 +692,14 @@ class _AiChatScreenState extends State<AiChatScreen>
 
   Widget _buildTypingIndicator() {
     return Container(
-      margin: const EdgeInsets.symmetric(
-          horizontal: 12, vertical: 6), // GIẢM margin
-      padding: const EdgeInsets.all(12), // GIẢM padding
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: _surfaceColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -632,7 +709,7 @@ class _AiChatScreenState extends State<AiChatScreen>
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 36, // GIẢM kích thước
+            width: 36,
             height: 36,
             decoration: BoxDecoration(
               gradient:
@@ -640,7 +717,7 @@ class _AiChatScreenState extends State<AiChatScreen>
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.psychology_rounded,
-                color: Colors.white, size: 18), // GIẢM icon
+                color: Colors.white, size: 18),
           ),
           const SizedBox(width: 12),
           Column(
@@ -651,10 +728,10 @@ class _AiChatScreenState extends State<AiChatScreen>
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   color: _textPrimary,
-                  fontSize: 12, // GIẢM font size
+                  fontSize: 12,
                 ),
               ),
-              const SizedBox(height: 4), // GIẢM khoảng cách
+              const SizedBox(height: 4),
               Row(
                 children: [
                   _buildTypingDot(0),
@@ -671,11 +748,11 @@ class _AiChatScreenState extends State<AiChatScreen>
 
   Widget _buildTypingDot(int index) {
     return Container(
-      margin: const EdgeInsets.only(right: 3), // GIẢM margin
-      width: 6, // GIẢM kích thước
+      margin: const EdgeInsets.only(right: 3),
+      width: 6,
       height: 6,
       decoration: BoxDecoration(
-        color: _primaryColor.withOpacity(0.6 + index * 0.2),
+        color: _primaryColor.withValues(alpha: 0.6 + index * 0.2),
         shape: BoxShape.circle,
       ),
     );
@@ -684,40 +761,40 @@ class _AiChatScreenState extends State<AiChatScreen>
   Widget _buildErrorWidget() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24), // GIẢM padding
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 80, // GIẢM kích thước
+              width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.1),
+                color: Colors.red.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(Icons.wifi_off_rounded,
-                  size: 35, color: Colors.red.shade400), // GIẢM icon
+                  size: 35, color: Colors.red.shade400),
             ),
-            const SizedBox(height: 16), // GIẢM khoảng cách
+            const SizedBox(height: 16),
             Text(
               'Lỗi kết nối',
               style: TextStyle(
-                fontSize: 20, // GIẢM font size
+                fontSize: 20,
                 fontWeight: FontWeight.w700,
                 color: _textPrimary,
               ),
             ),
-            const SizedBox(height: 8), // GIẢM khoảng cách
+            const SizedBox(height: 8),
             Text(
               _errorMessage!,
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 14, // GIẢM font size
+                fontSize: 14,
                 color: _textSecondary,
                 height: 1.4,
               ),
             ),
-            const SizedBox(height: 20), // GIẢM khoảng cách
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
                 setState(() {
@@ -728,17 +805,15 @@ class _AiChatScreenState extends State<AiChatScreen>
               style: ElevatedButton.styleFrom(
                 backgroundColor: _primaryColor,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 24, vertical: 12), // GIẢM padding
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
               child: const Text(
                 'Thử lại',
-                style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14), // GIẢM font size
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
               ),
             ),
           ],
@@ -750,12 +825,12 @@ class _AiChatScreenState extends State<AiChatScreen>
   Widget _buildWelcomeWidget() {
     return Center(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(20), // GIẢM padding
+        padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 100, // GIẢM kích thước
+              width: 100,
               height: 100,
               decoration: BoxDecoration(
                 gradient:
@@ -763,53 +838,50 @@ class _AiChatScreenState extends State<AiChatScreen>
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: _primaryColor.withOpacity(0.3),
-                    blurRadius: 12, // GIẢM blur
+                    color: _primaryColor.withValues(alpha: 0.3),
+                    blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
                 ],
               ),
               child: const Icon(Icons.psychology_rounded,
-                  size: 45, color: Colors.white), // GIẢM icon
+                  size: 45, color: Colors.white),
             ),
-            const SizedBox(height: 20), // GIẢM khoảng cách
+            const SizedBox(height: 20),
             Text(
               'AI Companion',
               style: TextStyle(
-                fontSize: 24, // GIẢM font size
+                fontSize: 24,
                 fontWeight: FontWeight.w700,
                 color: _textPrimary,
               ),
             ),
-            const SizedBox(height: 8), // GIẢM khoảng cách
+            const SizedBox(height: 8),
             Text(
               'Trợ lý thông minh hỗ trợ sức khỏe tinh thần',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 14, // GIẢM font size
+                fontSize: 14,
                 color: _textSecondary,
                 height: 1.5,
               ),
             ),
-            const SizedBox(height: 16), // GIẢM khoảng cách
+            const SizedBox(height: 16),
             Container(
-              padding: const EdgeInsets.all(12), // GIẢM padding
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: _accentColor.withOpacity(0.1),
+                color: _accentColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: _accentColor.withOpacity(0.2)),
+                border: Border.all(color: _accentColor.withValues(alpha: 0.2)),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.lightbulb_rounded,
-                      color: _accentColor, size: 20), // GIẢM icon
-                  const SizedBox(width: 8), // GIẢM khoảng cách
+                  Icon(Icons.lightbulb_rounded, color: _accentColor, size: 20),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Hỏi về sức khỏe tinh thần, mẹo hàng ngày, hoặc trò chuyện thân mật!',
-                      style: TextStyle(
-                          color: _textSecondary,
-                          fontSize: 12), // GIẢM font size
+                      style: TextStyle(color: _textSecondary, fontSize: 12),
                     ),
                   ),
                 ],
@@ -823,16 +895,14 @@ class _AiChatScreenState extends State<AiChatScreen>
 
   Widget _buildMessageInput() {
     return Container(
-      margin: const EdgeInsets.fromLTRB(
-          16, 8, 16, 16), // ĐIỀU CHỈNH margin (giảm top)
-      padding: const EdgeInsets.symmetric(
-          horizontal: 12, vertical: 6), // GIẢM padding
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: _surfaceColor,
-        borderRadius: BorderRadius.circular(20), // GIẢM border radius
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 15,
             offset: const Offset(0, 3),
           ),
@@ -843,17 +913,15 @@ class _AiChatScreenState extends State<AiChatScreen>
         children: [
           Expanded(
             child: ConstrainedBox(
-              constraints:
-                  const BoxConstraints(maxHeight: 100), // GIẢM maxHeight
+              constraints: const BoxConstraints(maxHeight: 100),
               child: TextField(
                 controller: _textController,
                 decoration: InputDecoration(
                   hintText: 'Nhập tin nhắn...',
-                  hintStyle: TextStyle(
-                      color: _textSecondary, fontSize: 15), // GIẢM font size
+                  hintStyle: TextStyle(color: _textSecondary, fontSize: 15),
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                      vertical: 10, horizontal: 4), // GIẢM padding
+                  contentPadding:
+                      const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
                 ),
                 enabled: _isInitialized,
                 onSubmitted: (_) => _sendMessage(),
@@ -861,14 +929,13 @@ class _AiChatScreenState extends State<AiChatScreen>
                 minLines: 1,
                 textCapitalization: TextCapitalization.sentences,
                 keyboardType: TextInputType.multiline,
-                style: const TextStyle(
-                    fontSize: 15, color: Colors.black87), // GIẢM font size
+                style: const TextStyle(fontSize: 15, color: Colors.black87),
               ),
             ),
           ),
-          const SizedBox(width: 6), // GIẢM khoảng cách
+          const SizedBox(width: 6),
           Container(
-            width: 40, // GIẢM kích thước
+            width: 40,
             height: 40,
             decoration: BoxDecoration(
               gradient: _isInitialized && !_loading
@@ -879,8 +946,8 @@ class _AiChatScreenState extends State<AiChatScreen>
             ),
             child: IconButton(
               onPressed: !_isInitialized || _loading ? null : _sendMessage,
-              icon: const Icon(Icons.send_rounded,
-                  color: Colors.white, size: 18), // GIẢM icon
+              icon:
+                  const Icon(Icons.send_rounded, color: Colors.white, size: 18),
               padding: EdgeInsets.zero,
             ),
           ),
@@ -889,7 +956,6 @@ class _AiChatScreenState extends State<AiChatScreen>
     );
   }
 
-  // Các phương thức còn lại giữ nguyên...
   Widget _buildChatHistory() {
     final pinnedChats = _chatHistory.where((chat) => chat.isPinned).toList();
     final otherChats = _chatHistory.where((chat) => !chat.isPinned).toList();
@@ -897,41 +963,37 @@ class _AiChatScreenState extends State<AiChatScreen>
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(
-              horizontal: 16, vertical: 12), // GIẢM padding
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             children: [
               IconButton(
                 onPressed: () {
-                  // SỬA: Khi nhấn Back, quay lại và bắt đầu chat MỚI
                   setState(() {
                     _showHistory = false;
                     _messages.clear();
-                    _currentChatId = null; // Xóa ID chat cũ
-                    // Thêm lại tin nhắn chào
-                    _messages.add({
+                    _currentChatId = null;
+                    _messages.add(const {
                       'role': 'model',
                       'text':
                           'Xin chào! Tôi là AI Companion. Tôi có thể giúp gì cho bạn hôm nay?'
                     });
                   });
                 },
-                icon: Icon(Icons.arrow_back,
-                    color: _primaryColor, size: 22), // GIẢM icon
+                icon: Icon(Icons.arrow_back, color: _primaryColor, size: 22),
               ),
-              const SizedBox(width: 6), // GIẢM khoảng cách
+              const SizedBox(width: 6),
               const Text(
                 'Lịch sử trò chuyện',
                 style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black87), // GIẢM font size
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black87,
+                ),
               ),
               const Spacer(),
               Text(
                 '${_chatHistory.length} cuộc hội thoại',
-                style: TextStyle(
-                    color: _textSecondary, fontSize: 12), // GIẢM font size
+                style: TextStyle(color: _textSecondary, fontSize: 12),
               ),
             ],
           ),
@@ -939,13 +1001,12 @@ class _AiChatScreenState extends State<AiChatScreen>
         Expanded(
           child: ListView(
             controller: _historyScrollController,
-            padding: const EdgeInsets.symmetric(
-                horizontal: 12, vertical: 6), // GIẢM padding
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             children: [
               if (pinnedChats.isNotEmpty) ...[
                 _buildHistorySectionHeader('Cuộc trò chuyện đã ghim'),
                 ...pinnedChats.map((chat) => _buildHistoryItem(chat)),
-                const SizedBox(height: 12), // GIẢM khoảng cách
+                const SizedBox(height: 12),
               ],
               if (otherChats.isNotEmpty) ...[
                 _buildHistorySectionHeader('Cuộc trò chuyện gần đây'),
@@ -961,21 +1022,21 @@ class _AiChatScreenState extends State<AiChatScreen>
 
   Widget _buildHistorySectionHeader(String title) {
     return Padding(
-      padding: const EdgeInsets.symmetric(
-          vertical: 6, horizontal: 4), // GIẢM padding
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
       child: Text(
         title,
         style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: _textSecondary), // GIẢM font size
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: _textSecondary,
+        ),
       ),
     );
   }
 
   Widget _buildHistoryItem(ChatHistory chat) {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 3), // GIẢM margin
+      margin: const EdgeInsets.symmetric(vertical: 3),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -985,13 +1046,13 @@ class _AiChatScreenState extends State<AiChatScreen>
             setState(() => _showHistory = false);
           },
           child: Container(
-            padding: const EdgeInsets.all(12), // GIẢM padding
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: _surfaceColor,
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 8,
                   offset: const Offset(0, 1),
                 ),
@@ -1000,16 +1061,16 @@ class _AiChatScreenState extends State<AiChatScreen>
             child: Row(
               children: [
                 Container(
-                  width: 40, // GIẢM kích thước
+                  width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: _primaryColor.withOpacity(0.1),
+                    color: _primaryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(Icons.chat_bubble_outline,
-                      color: _primaryColor, size: 18), // GIẢM icon
+                      color: _primaryColor, size: 18),
                 ),
-                const SizedBox(width: 10), // GIẢM khoảng cách
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1021,35 +1082,66 @@ class _AiChatScreenState extends State<AiChatScreen>
                               chat.title,
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,
-                                fontSize: 14, // GIẢM font size
+                                fontSize: 14,
                                 color: Colors.black87,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           if (chat.isPinned)
-                            Icon(Icons.push_pin,
-                                size: 14, color: _accentColor), // GIẢM icon
+                            Icon(Icons.push_pin, size: 14, color: _accentColor),
                         ],
                       ),
-                      const SizedBox(height: 3), // GIẢM khoảng cách
+                      const SizedBox(height: 3),
                       Text(
                         chat.preview,
-                        style: TextStyle(
-                            color: _textSecondary,
-                            fontSize: 12), // GIẢM font size
+                        style: TextStyle(color: _textSecondary, fontSize: 12),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 3), // GIẢM khoảng cách
+                      const SizedBox(height: 3),
                       Text(
                         _formatDate(chat.createdAt),
                         style: TextStyle(
-                            color: _textSecondary.withOpacity(0.7),
-                            fontSize: 10), // GIẢM font size
+                          color: _textSecondary.withValues(alpha: 0.7),
+                          fontSize: 10,
+                        ),
                       ),
                     ],
                   ),
+                ),
+                PopupMenuButton<String>(
+                  icon: Icon(Icons.more_vert, color: _textSecondary, size: 18),
+                  onSelected: (value) => _handleHistoryMenu(value, chat),
+                  itemBuilder: (context) => [
+                    PopupMenuItem(
+                      value: 'pin',
+                      child: Row(
+                        children: [
+                          Icon(
+                            chat.isPinned
+                                ? Icons.push_pin
+                                : Icons.push_pin_outlined,
+                            color: _accentColor,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(chat.isPinned ? 'Bỏ ghim' : 'Ghim'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete_outline,
+                              color: Colors.red, size: 18),
+                          SizedBox(width: 8),
+                          Text('Xóa'),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -1062,40 +1154,106 @@ class _AiChatScreenState extends State<AiChatScreen>
   Widget _buildEmptyHistory() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24), // GIẢM padding
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 70, // GIẢM kích thước
+              width: 70,
               height: 70,
               decoration: BoxDecoration(
-                color: _primaryColor.withOpacity(0.1),
+                color: _primaryColor.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.history,
-                  color: _primaryColor, size: 35), // GIẢM icon
+              child: Icon(Icons.history, color: _primaryColor, size: 35),
             ),
-            const SizedBox(height: 12), // GIẢM khoảng cách
+            const SizedBox(height: 12),
             Text(
               'Chưa có lịch sử trò chuyện',
               style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: _textSecondary), // GIẢM font size
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: _textSecondary,
+              ),
             ),
-            const SizedBox(height: 6), // GIẢM khoảng cách
+            const SizedBox(height: 6),
             Text(
               'Các cuộc trò chuyện của bạn sẽ xuất hiện ở đây',
               style: TextStyle(
-                  color: _textSecondary.withOpacity(0.7),
-                  fontSize: 12), // GIẢM font size
+                color: _textSecondary.withValues(alpha: 0.7),
+                fontSize: 12,
+              ),
               textAlign: TextAlign.center,
             ),
           ],
         ),
       ),
     );
+  }
+
+  void _handleHistoryMenu(String value, ChatHistory chat) async {
+    switch (value) {
+      case 'pin':
+        if (_userId == null) return;
+        try {
+          await _db
+              .collection('users')
+              .doc(_userId)
+              .collection('chats')
+              .doc(chat.id)
+              .update({'isPinned': !chat.isPinned});
+        } catch (e) {
+          debugPrint("Error toggling pin: $e");
+          _showError("Không thể cập nhật trạng thái ghim.");
+        }
+        break;
+      case 'delete':
+        _deleteChat(chat);
+        break;
+    }
+  }
+
+  void _deleteChat(ChatHistory chat) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Xóa cuộc trò chuyện'),
+        content: const Text('Bạn có chắc chắn muốn xóa cuộc trò chuyện này?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(context).pop();
+              if (_userId == null) return;
+              try {
+                await _db
+                    .collection('users')
+                    .doc(_userId)
+                    .collection('chats')
+                    .doc(chat.id)
+                    .delete();
+              } catch (e) {
+                debugPrint("Error deleting chat: $e");
+                _showError("Không thể xóa cuộc trò chuyện.");
+              }
+            },
+            child: const Text('Xóa', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _loadChat(ChatHistory chat) {
+    setState(() {
+      _messages.clear();
+      _messages.addAll(chat.messages);
+      _currentChatId = chat.id;
+    });
+    _scrollDown();
   }
 
   Future<void> _sendMessage() async {
@@ -1121,28 +1279,28 @@ class _AiChatScreenState extends State<AiChatScreen>
           _messages.add({'role': 'model', 'text': aiResponse});
         });
 
-        // --- ĐÃ SỬA LẠI TOÀN BỘ LOGIC LƯU ---
+        // Logic lưu chat
         if (_currentChatId == null) {
-          // Đây là một cuộc trò chuyện MỚI (chưa có ID)
-          // Lưu nó và lấy ID mới
+          // Chat mới - lưu và lấy ID
+          debugPrint("Creating new chat...");
           final newId = await _saveNewChat();
           if (newId != null) {
             setState(() {
-              _currentChatId =
-                  newId; // Đặt ID để các tin nhắn sau sẽ là CẬP NHẬT
+              _currentChatId = newId;
             });
+            debugPrint("New chat created with ID: $newId");
           }
         } else {
-          // Đây là cuộc trò chuyện HIỆN CÓ
-          // Chỉ cần cập nhật nó
+          // Chat đã có - chỉ cập nhật
+          debugPrint("Updating existing chat: $_currentChatId");
           await _updateExistingChat();
         }
-        // --- KẾT THÚC LOGIC LƯU ---
       } else {
-        _showError('Received an empty response from AI');
+        _showError('Không nhận được phản hồi từ AI');
       }
     } catch (e) {
-      _showError('Error: ${e.toString()}');
+      debugPrint("Error sending message: $e");
+      _showError('Lỗi: ${e.toString()}');
     } finally {
       if (mounted) {
         setState(() {
@@ -1180,15 +1338,6 @@ class _AiChatScreenState extends State<AiChatScreen>
     }
   }
 
-  void _loadChat(ChatHistory chat) {
-    setState(() {
-      _messages.clear();
-      _messages.addAll(chat.messages);
-      _currentChatId = chat.id; // <-- THÊM MỚI: Đặt ID của chat đang xem
-    });
-    _scrollDown();
-  }
-
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date);
@@ -1219,8 +1368,7 @@ class MessageWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(
-          vertical: 6, horizontal: 12), // GIẢM margin
+      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
       child: Row(
         mainAxisAlignment:
             isFromUser ? MainAxisAlignment.end : MainAxisAlignment.start,
@@ -1228,21 +1376,22 @@ class MessageWidget extends StatelessWidget {
         children: [
           if (!isFromUser)
             Container(
-              margin: const EdgeInsets.only(right: 6, top: 2), // GIẢM margin
-              width: 32, // GIẢM kích thước
+              margin: const EdgeInsets.only(right: 6, top: 2),
+              width: 32,
               height: 32,
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                    colors: [primaryColor, primaryColor.withOpacity(0.8)]),
+                gradient: LinearGradient(colors: [
+                  primaryColor,
+                  primaryColor.withValues(alpha: 0.8)
+                ]),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.psychology_rounded,
-                  color: Colors.white, size: 16), // GIẢM icon
+                  color: Colors.white, size: 16),
             ),
           Flexible(
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                  vertical: 10, horizontal: 14), // GIẢM padding
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
               decoration: BoxDecoration(
                 color: isFromUser ? primaryColor : surfaceColor,
                 borderRadius: BorderRadius.only(
@@ -1253,7 +1402,7 @@ class MessageWidget extends StatelessWidget {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 6,
                     offset: const Offset(0, 1),
                   ),
@@ -1264,14 +1413,14 @@ class MessageWidget extends StatelessWidget {
                 children: [
                   if (!isFromUser)
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 3), // GIẢM padding
+                      padding: const EdgeInsets.only(bottom: 3),
                       child: Text(
                         'AI Companion',
                         style: TextStyle(
-                          fontSize: 11, // GIẢM font size
+                          fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: isFromUser
-                              ? Colors.white70
+                              ? Colors.white.withValues(alpha: 0.7)
                               : Colors.grey.shade600,
                         ),
                       ),
@@ -1280,7 +1429,7 @@ class MessageWidget extends StatelessWidget {
                     text,
                     style: TextStyle(
                       color: isFromUser ? Colors.white : Colors.black87,
-                      fontSize: 14, // GIẢM font size
+                      fontSize: 14,
                       height: 1.4,
                     ),
                   ),
@@ -1290,15 +1439,14 @@ class MessageWidget extends StatelessWidget {
           ),
           if (isFromUser)
             Container(
-              margin: const EdgeInsets.only(left: 6, top: 2), // GIẢM margin
-              width: 32, // GIẢM kích thước
+              margin: const EdgeInsets.only(left: 6, top: 2),
+              width: 32,
               height: 32,
               decoration: const BoxDecoration(
                 color: Colors.grey,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.person,
-                  color: Colors.white, size: 16), // GIẢM icon
+              child: const Icon(Icons.person, color: Colors.white, size: 16),
             ),
         ],
       ),

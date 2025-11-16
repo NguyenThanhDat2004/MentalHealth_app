@@ -83,4 +83,5 @@ class DefaultFirebaseOptions {
     authDomain: 'mentalhealth-app-demo.firebaseapp.com',
     storageBucket: 'mentalhealth-app-demo.firebasestorage.app',
   );
+
 }
