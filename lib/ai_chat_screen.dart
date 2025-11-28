@@ -3,13 +3,12 @@ import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 const String _apiKey = String.fromEnvironment(
   'GEMINI_API_KEY',
-  defaultValue: '',
+  defaultValue: 'AIzaSyCcudhaJxV2IcW5dis-AEJxn5ybRni7z7I',
 );
 
 class ChatHistory {
@@ -267,10 +266,11 @@ class _AiChatScreenState extends State<AiChatScreen>
     _workingModel = 'gemini-2.0-flash';
     _workingApiVersion = 'v1';
 
-    // ĐÃ SỬA: Thêm lời chào ngay lập tức khi khởi tạo
+    // ĐÃ SỬA: Thêm logic tự động gửi lời chào
     if (mounted) {
       setState(() {
         _isInitialized = true;
+        // Chỉ thêm nếu danh sách đang trống
         if (_messages.isEmpty) {
           _messages.add(const {
             'role': 'model',
@@ -515,6 +515,7 @@ class _AiChatScreenState extends State<AiChatScreen>
     setState(() {
       _messages.clear();
       _currentChatId = null;
+      // ĐÃ SỬA: Tự động thêm lời chào khi reset
       _messages.add(const {
         'role': 'model',
         'text':
@@ -589,19 +590,6 @@ class _AiChatScreenState extends State<AiChatScreen>
       _currentChatId = chat.id;
     });
     _scrollDown();
-  }
-
-  String _formatDate(DateTime? date) {
-    if (date == null) return 'Đang lưu...';
-    final now = DateTime.now();
-    final difference = now.difference(date);
-
-    if (difference.inMinutes < 1) return 'Vừa xong';
-    if (difference.inHours < 1) return '${difference.inMinutes} phút trước';
-    if (difference.inDays < 1) return '${difference.inHours} giờ trước';
-    if (difference.inDays < 7) return '${difference.inDays} ngày trước';
-
-    return DateFormat('dd/MM/yyyy').format(date);
   }
 
   @override
@@ -914,7 +902,7 @@ class _AiChatScreenState extends State<AiChatScreen>
         if (_errorMessage != null)
           _buildGlassErrorWidget()
         else if (!_isInitialized)
-          _buildGlassWelcomeWidget()
+          _buildGlassWelcomeWidget() // Cái này sẽ bị ẩn nhanh vì _initialize() chạy ngay
         else
           _buildGlassChatMessages(),
       ],
@@ -1352,28 +1340,14 @@ class _AiChatScreenState extends State<AiChatScreen>
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                chat.preview,
-                style: TextStyle(
-                  color: _textSecondaryGlass,
-                  fontSize: 13,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                _formatDate(chat.createdAt),
-                style: TextStyle(
-                  color: _textSecondaryGlass.withValues(alpha: 0.75),
-                  fontSize: 12,
-                ),
-              ),
-            ],
+          subtitle: Text(
+            chat.preview,
+            style: TextStyle(
+              color: _textSecondaryGlass,
+              fontSize: 13,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
           trailing: PopupMenuButton<String>(
             icon: Icon(Icons.more_vert, color: _textSecondaryGlass, size: 20),
@@ -1522,6 +1496,7 @@ class GlassMessageWidget extends StatelessWidget {
                 maxWidth: MediaQuery.of(context).size.width * 0.75),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
+              // Tăng độ đậm (alpha) để tin nhắn sáng hơn như yêu cầu
               color: isFromUser
                   ? primaryColor.withValues(alpha: 0.5)
                   : Colors.white.withValues(alpha: 0.2),
@@ -1533,7 +1508,7 @@ class GlassMessageWidget extends StatelessWidget {
             child: Text(
               text,
               style: const TextStyle(
-                color: Color(0xFFF1F5F9),
+                color: Color(0xFFF1F5F9), // White text for dark mode
                 fontSize: 15,
                 height: 1.4,
               ),
