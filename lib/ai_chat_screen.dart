@@ -9,7 +9,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 const String _apiKey = String.fromEnvironment(
   'GEMINI_API_KEY',
-  defaultValue: 'AIzaSyCcudhaJxV2IcW5dis-AEJxn5ybRni7z7I',
+  defaultValue: '',
 );
 
 class ChatHistory {
