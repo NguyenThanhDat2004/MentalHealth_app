@@ -8,7 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 const String _apiKey = String.fromEnvironment(
   'GEMINI_API_KEY',
-  defaultValue: 'AIzaSyCcudhaJxV2IcW5dis-AEJxn5ybRni7z7I',
+  defaultValue: 'AIzaSyDgHXUTD5_4WyZqR0_zULwrGfLFvi3FNew',
 );
 
 class ChatHistory {
@@ -63,6 +63,7 @@ class AiChatScreen extends StatefulWidget {
 
 class _AiChatScreenState extends State<AiChatScreen>
     with TickerProviderStateMixin {
+  // ... (Giữ nguyên các biến state) ...
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final List<Map<String, String>> _messages = [];
@@ -105,6 +106,7 @@ class _AiChatScreenState extends State<AiChatScreen>
   final Color _textPrimaryGlass = const Color(0xFFF1F5F9);
   final Color _textSecondaryGlass = const Color(0xFF94A3B8);
 
+  // ... (Giữ nguyên _glassDecoration) ...
   BoxDecoration _glassDecoration({double blur = 20, double opacity = 0.1}) {
     return BoxDecoration(
       gradient: LinearGradient(
@@ -141,6 +143,7 @@ class _AiChatScreenState extends State<AiChatScreen>
     _initializeApp();
   }
 
+  // ... (Giữ nguyên _initializeAnimations, _initializeApp, _initializeAuth, _signInAnonymously, _loadChatHistory) ...
   void _initializeAnimations() {
     _waveController = AnimationController(
       duration: const Duration(seconds: 8),
@@ -266,13 +269,12 @@ class _AiChatScreenState extends State<AiChatScreen>
     _workingModel = 'gemini-2.0-flash';
     _workingApiVersion = 'v1';
 
-    // ĐÃ SỬA: Thêm logic tự động gửi lời chào
+    //Thêm logic tự động thêm tin nhắn chào
     if (mounted) {
       setState(() {
         _isInitialized = true;
-        // Chỉ thêm nếu danh sách đang trống
         if (_messages.isEmpty) {
-          _messages.add(const {
+          _messages.add({
             'role': 'model',
             'text':
                 'Xin chào! Tôi là AI Companion. Tôi có thể giúp gì cho bạn hôm nay?'
@@ -282,6 +284,7 @@ class _AiChatScreenState extends State<AiChatScreen>
     }
   }
 
+  // ... (Giữ nguyên _sendMessage, _saveNewChat, _updateExistingChat, _generateChatTitle, _safeSubstring, _callGeminiAPI) ...
   Future<void> _sendMessage() async {
     if (_textController.text.trim().isEmpty || _loading || !_isInitialized) {
       return;
@@ -515,8 +518,8 @@ class _AiChatScreenState extends State<AiChatScreen>
     setState(() {
       _messages.clear();
       _currentChatId = null;
-      // ĐÃ SỬA: Tự động thêm lời chào khi reset
-      _messages.add(const {
+      // ĐÃ SỬA: Thêm tin nhắn chào khi reset chat
+      _messages.add({
         'role': 'model',
         'text':
             'Xin chào! Tôi là AI Companion. Tôi có thể giúp gì cho bạn hôm nay?'
@@ -524,6 +527,7 @@ class _AiChatScreenState extends State<AiChatScreen>
     });
   }
 
+  // ... (Giữ nguyên _handleHistoryMenu, _deleteChat, _showDeleteConfirmationDialog, _buildGlassDialogButton, _loadChat) ...
   void _handleHistoryMenu(String value, ChatHistory chat) async {
     switch (value) {
       case 'pin':
@@ -541,44 +545,210 @@ class _AiChatScreenState extends State<AiChatScreen>
         }
         break;
       case 'delete':
-        _deleteChat(chat);
+        _showDeleteConfirmationDialog(chat);
         break;
     }
   }
 
-  void _deleteChat(ChatHistory chat) {
-    showDialog(
+  void _showDeleteConfirmationDialog(ChatHistory chat) {
+    showGeneralDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Xóa cuộc trò chuyện'),
-        content: const Text('Bạn có chắc chắn muốn xóa cuộc trò chuyện này?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Hủy'),
+      barrierDismissible: true,
+      barrierLabel: 'Dismiss',
+      barrierColor: Colors.black.withValues(alpha: 0.5),
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return Center(
+          child: Material(
+            type: MaterialType.transparency,
+            child: FadeTransition(
+              opacity: animation,
+              child: ScaleTransition(
+                scale: CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutBack,
+                ),
+                child: Container(
+                  width: MediaQuery.of(context).size.width * 0.85,
+                  margin: const EdgeInsets.symmetric(horizontal: 20),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.3),
+                        blurRadius: 30,
+                        spreadRadius: 5,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(24),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                      child: Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              _surfaceGlass.withValues(alpha: 0.2),
+                              _surfaceGlass.withValues(alpha: 0.1),
+                            ],
+                          ),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.red.withValues(alpha: 0.15),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.delete_forever_rounded,
+                                color: Colors.red.withValues(alpha: 0.9),
+                                size: 40,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            Text(
+                              'Xóa cuộc trò chuyện?',
+                              style: TextStyle(
+                                color: _textPrimaryGlass,
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Hành động này không thể hoàn tác. Bạn có chắc chắn muốn xóa cuộc trò chuyện này không?',
+                              style: TextStyle(
+                                color: _textSecondaryGlass,
+                                fontSize: 15,
+                                height: 1.4,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 28),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildGlassDialogButton(
+                                    label: 'Hủy',
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(),
+                                    isPrimary: false,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: _buildGlassDialogButton(
+                                    label: 'Xóa',
+                                    onPressed: () async {
+                                      Navigator.of(context).pop();
+                                      if (_userId == null) return;
+                                      try {
+                                        await _db
+                                            .collection('users')
+                                            .doc(_userId)
+                                            .collection('chats')
+                                            .doc(chat.id)
+                                            .delete();
+                                        if (_currentChatId == chat.id) {
+                                          _resetChat();
+                                        }
+                                      } catch (e) {
+                                        debugPrint("Error deleting chat: $e");
+                                        _showError(
+                                            "Không thể xóa cuộc trò chuyện.");
+                                      }
+                                    },
+                                    isPrimary: true,
+                                    isDestructive: true,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
-          TextButton(
-            onPressed: () async {
-              Navigator.of(context).pop();
-              if (_userId == null) return;
-              try {
-                await _db
-                    .collection('users')
-                    .doc(_userId)
-                    .collection('chats')
-                    .doc(chat.id)
-                    .delete();
-                if (_currentChatId == chat.id) {
-                  _resetChat();
-                }
-              } catch (e) {
-                debugPrint("Error deleting chat: $e");
-                _showError("Không thể xóa cuộc trò chuyện.");
-              }
-            },
-            child: const Text('Xóa', style: TextStyle(color: Colors.red)),
+        );
+      },
+    );
+  }
+
+  Widget _buildGlassDialogButton({
+    required String label,
+    required VoidCallback onPressed,
+    bool isPrimary = false,
+    bool isDestructive = false,
+  }) {
+    Color backgroundColor;
+    Color textColor;
+
+    if (isDestructive) {
+      backgroundColor = Colors.red.withValues(alpha: 0.8);
+      textColor = Colors.white;
+    } else if (isPrimary) {
+      backgroundColor = _primaryGlass;
+      textColor = Colors.white;
+    } else {
+      backgroundColor = _surfaceGlass.withValues(alpha: 0.2);
+      textColor = _textPrimaryGlass;
+    }
+
+    return Container(
+      height: 50,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: isPrimary || isDestructive
+            ? [
+                BoxShadow(
+                  color: backgroundColor.withValues(alpha: 0.4),
+                  blurRadius: 15,
+                  offset: const Offset(0, 4),
+                ),
+              ]
+            : null,
+      ),
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: backgroundColor,
+          foregroundColor: textColor,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: isPrimary || isDestructive
+                ? BorderSide.none
+                : BorderSide(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    width: 1,
+                  ),
           ),
-        ],
+          padding: EdgeInsets.zero,
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
     );
   }
@@ -592,6 +762,7 @@ class _AiChatScreenState extends State<AiChatScreen>
     _scrollDown();
   }
 
+  // ... (Giữ nguyên dispose, build, _buildLiquidGlassBackground, _buildFloatingBubbles, _buildFloatingBubble) ...
   @override
   void dispose() {
     _waveController.dispose();
@@ -896,13 +1067,14 @@ class _AiChatScreenState extends State<AiChatScreen>
     );
   }
 
+  // ... (Giữ nguyên _buildGlassChatInterface, _buildGlassChatMessages, _buildGlassTypingIndicator, _buildGlassTypingDot, _buildGlassErrorWidget) ...
   Widget _buildGlassChatInterface() {
     return Stack(
       children: [
         if (_errorMessage != null)
           _buildGlassErrorWidget()
         else if (!_isInitialized)
-          _buildGlassWelcomeWidget() // Cái này sẽ bị ẩn nhanh vì _initialize() chạy ngay
+          _buildGlassWelcomeWidget()
         else
           _buildGlassChatMessages(),
       ],
@@ -1263,6 +1435,7 @@ class _AiChatScreenState extends State<AiChatScreen>
     );
   }
 
+  // ... (Giữ nguyên _buildGlassChatHistory, _buildHistorySectionHeader, _buildHistoryItem) ...
   Widget _buildGlassChatHistory() {
     final pinnedChats = _chatHistory.where((chat) => chat.isPinned).toList();
     final otherChats = _chatHistory.where((chat) => !chat.isPinned).toList();

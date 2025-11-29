@@ -26,7 +26,6 @@ class MentalHealthApp extends StatefulWidget {
   static void setLocale(BuildContext context, Locale newLocale) {
     _MentalHealthAppState? state =
         context.findAncestorStateOfType<_MentalHealthAppState>();
-    // ✅ FIXED: Thêm ? để gọi method an toàn
     state?.setLocale(newLocale);
   }
 }
